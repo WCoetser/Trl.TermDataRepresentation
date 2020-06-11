@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Trl.PegParser;
 using Trl.PegParser.Grammer;
-using Trl.PegParser.Grammer.ParserGenerator;
 using Trl.PegParser.Tokenization;
 using Trl.TermDataRepresentation.Parser.AST;
 
@@ -26,19 +24,28 @@ namespace Trl.TermDataRepresentation.Parser
 
         private void CreateTokenizer()
         {
+            // NB: This list of token definitions is prioritized
             _tokenizer = _pegFacade.Tokenizer(new[] {
-                _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z\d]\w*(\.[_a-zA-Z\d]\w*)*")),
-                _pegFacade.Token(TokenNames.Whitespace, new Regex(@"\s+")),
-                _pegFacade.Token(TokenNames.SemiColon, new Regex(@";"))
+                _pegFacade.Token(TokenNames.String, new Regex("\"([^\"]|(\\\"))*\"", RegexOptions.Compiled)), // \" is used to escape quote characters
+                _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z\d]\w*(\.[_a-zA-Z\d]\w*)*", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.Whitespace, new Regex(@"\s+", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled))
             });
         }
 
         private void CreateSemanticActions()
         {
+            var replaceQuotesRegex = new Regex("(^\")|(\"$)", RegexOptions.Compiled);
+
             _pegFacade.DefaultSemanticActions.SetDefaultGenericPassthroughAction<GenericResult>();
+
+            _pegFacade.DefaultSemanticActions.OrderedChoiceAction = (_, subResults) => subResults.First();
 
             _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.Identifier, 
                 (matchedTokens, _) => new Identifier { Name = matchedTokens.GetMatchedString() });
+
+            _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.String,
+                (matchedTokens, _) => new StringValue { Value = replaceQuotesRegex.Replace(matchedTokens.GetMatchedString(), string.Empty) });
 
             _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.Statement,
                 (_, subResults) => subResults.First());
@@ -64,7 +71,7 @@ namespace Trl.TermDataRepresentation.Parser
             const string grammer = @"
 Start => (Statement [SemiColon])+;
 Statement => Term;
-Term => [Identifier];
+Term => [Identifier] | [String];
 ";            
             _parser = _pegFacade.Parser(ParseRuleNames.Start, _pegFacade.ParserGenerator.GetParsingRules(grammer));
         }

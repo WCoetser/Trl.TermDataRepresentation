@@ -25,12 +25,21 @@ namespace Trl.TermDataRepresentation.Tests
             throw new NotImplementedException("Under construction");
         }
 
-        [InlineData("\"Testing 123\";")]
-        [InlineData("\"Testing \\\" 123\";")]
+        [InlineData("\"Testing 123\"")]
+        [InlineData("\"\"")] // empty string
+        [InlineData("\"Testing \\\" 123\"")] // Test escaping the double quote character
         [Theory]
         public void ShouldParseString(string inputString)
         {
-            throw new NotImplementedException("Under construction");
+            // Act
+            var result = _parser.ParseToAst($"{inputString};");
+
+            // Assert
+            var statements = result.Statements;
+            Assert.True(result.Succeed);
+            Assert.Single(statements.StatementList);
+            StringValue str = (StringValue)statements.StatementList.Single();
+            Assert.Equal(inputString.Substring(1, inputString.Length - 2), str.Value);
         }
 
         [InlineData("_test")]
