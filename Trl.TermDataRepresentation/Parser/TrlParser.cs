@@ -26,10 +26,11 @@ namespace Trl.TermDataRepresentation.Parser
         {
             // NB: This list of token definitions is prioritized
             _tokenizer = _pegFacade.Tokenizer(new[] {
-                _pegFacade.Token(TokenNames.String, new Regex("\"([^\"]|(\\\"))*\"", RegexOptions.Compiled)), // \" is used to escape quote characters
-                _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z\d]\w*(\.[_a-zA-Z\d]\w*)*", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.String, new Regex("\"(?:[^\"]|(?:\\\"))*\"", RegexOptions.Compiled)), // \" is used to escape quote characters
+                _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Whitespace, new Regex(@"\s+", RegexOptions.Compiled)),
-                _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled))
+                _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.Number, new Regex(@"[+-]?\d+\.?\d*", RegexOptions.Compiled))
             });
         }
 
@@ -46,6 +47,9 @@ namespace Trl.TermDataRepresentation.Parser
 
             _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.String,
                 (matchedTokens, _) => new StringValue { Value = replaceQuotesRegex.Replace(matchedTokens.GetMatchedString(), string.Empty) });
+
+            _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.Number,
+                (matchedTokens, _) => new NumericValue { Value = matchedTokens.GetMatchedString() });
 
             _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.Statement,
                 (_, subResults) => subResults.First());
@@ -71,7 +75,7 @@ namespace Trl.TermDataRepresentation.Parser
             const string grammer = @"
 Start => (Statement [SemiColon])+;
 Statement => Term;
-Term => [Identifier] | [String];
+Term => [Identifier] | [String] | [Number];
 ";            
             _parser = _pegFacade.Parser(ParseRuleNames.Start, _pegFacade.ParserGenerator.GetParsingRules(grammer));
         }

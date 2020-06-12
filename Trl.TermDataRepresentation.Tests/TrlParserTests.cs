@@ -15,14 +15,22 @@ namespace Trl.TermDataRepresentation.Tests
             _parser = new TrlParser();
         }
 
-        [InlineData("123;")]
-        [InlineData("-123;")]
-        [InlineData("+123;")]
-        [InlineData("0.123;")]
+        [InlineData("123")]
+        [InlineData("-123")]
+        [InlineData("+123")]
+        [InlineData("0.123")]
         [Theory]
         public void ShouldParseNumber(string inputString)
         {
-            throw new NotImplementedException("Under construction");
+            // Act
+            var result = _parser.ParseToAst($"{inputString};");
+
+            // Assert
+            var statements = result.Statements;
+            Assert.True(result.Succeed);
+            Assert.Single(statements.StatementList);
+            NumericValue str = (NumericValue)statements.StatementList.Single();
+            Assert.Equal(inputString, str.Value);
         }
 
         [InlineData("\"Testing 123\"")]
@@ -45,6 +53,7 @@ namespace Trl.TermDataRepresentation.Tests
         [InlineData("_test")]
         [InlineData("part1.part2")]
         [InlineData("part1.part2.part3")]
+        [InlineData("part1.part2_.pa_rt3")]
         [Theory]
         public void ShouldParseIdentifier(string inputString)
         {
