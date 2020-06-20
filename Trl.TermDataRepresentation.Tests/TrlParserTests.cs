@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
@@ -47,7 +46,7 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.True(result.Succeed);
             Assert.Single(statements.StatementList);
             StringValue str = (StringValue)statements.StatementList.Single();
-            Assert.Equal(inputString.Substring(1, inputString.Length - 2), str.Value);
+            Assert.Equal(inputString[1..^1], str.Value);
         }
 
         [InlineData("_test")]
@@ -76,6 +75,18 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.False(result.Succeed);
+        }
+
+        [Fact]
+        public void ShouldParseSemicolonSequence()
+        {
+            // Act
+            var result = _parser.ParseToAst(";;;");
+
+            // Assert
+            Assert.True(result.Succeed);
+            var statements = result.Statements;
+            Assert.Empty(statements.StatementList);
         }
     }
 }

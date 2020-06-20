@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trl.TermDataRepresentation", "Trl.TermDataRepresentation\Trl.TermDataRepresentation.csproj", "{ED8C0239-9F15-43F5-8600-0CC8C802DBDD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation", "Trl.TermDataRepresentation\Trl.TermDataRepresentation.csproj", "{ED8C0239-9F15-43F5-8600-0CC8C802DBDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trl.TermDataRepresentation.Tests", "Trl.TermDataRepresentation.Tests\Trl.TermDataRepresentation.Tests.csproj", "{DBA3ACE4-5AB0-4D7A-8BDC-A5A1987EA3F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation.Tests", "Trl.TermDataRepresentation.Tests\Trl.TermDataRepresentation.Tests.csproj", "{DBA3ACE4-5AB0-4D7A-8BDC-A5A1987EA3F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

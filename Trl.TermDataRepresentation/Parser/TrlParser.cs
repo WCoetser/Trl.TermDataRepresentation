@@ -42,6 +42,8 @@ namespace Trl.TermDataRepresentation.Parser
 
             _pegFacade.DefaultSemanticActions.OrderedChoiceAction = (_, subResults) => subResults.First();
 
+            _pegFacade.DefaultSemanticActions.OptionalAction = (_, subResults) => subResults.FirstOrDefault();
+
             _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.Identifier, 
                 (matchedTokens, _) => new Identifier { Name = matchedTokens.GetMatchedString() });
 
@@ -60,11 +62,15 @@ namespace Trl.TermDataRepresentation.Parser
             _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.Start,
                 (_, subResults) =>
                 {
+                    var oneOrMore = subResults.Cast<GenericResult>().Single();
                     Statements statements = new Statements { StatementList = new List<ITrlParseResult>() };
-                    foreach (var nestedBrackets in subResults.Cast<GenericResult>())
+                    foreach (var nestedBrackets in oneOrMore.SubResults.Cast<GenericResult>())
                     {
-                        var statement = nestedBrackets.SubResults.Cast<GenericResult>().Single();
-                        statements.StatementList.Add(statement.SubResults.First()); // this is the part before the semi-colon
+                        var statement = nestedBrackets.SubResults.First();
+                        if (statement != null) // optional case: where we have a string of semi-colons
+                        {
+                            statements.StatementList.Add(statement); // this is the part before the semi-colon
+                        }
                     }
                     return statements;
                 });
@@ -73,7 +79,7 @@ namespace Trl.TermDataRepresentation.Parser
         private void CreateParser()
         {
             const string grammer = @"
-Start => (Statement [SemiColon])+;
+Start => (Statement? [SemiColon])+;
 Statement => Term;
 Term => [Identifier] | [String] | [Number];
 ";            
