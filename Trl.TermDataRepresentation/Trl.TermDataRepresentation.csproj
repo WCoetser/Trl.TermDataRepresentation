@@ -2,11 +2,44 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+
+    <!-- BEGIN NUGET METADATA -->
+
+    <PackageId>Trl.TermDataRepresentation</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Wikus Coetser</Authors>
+    <Company></Company>
+    <Title>Term Data Representation</Title>
+    <PackageDescription>NB: WORK IN PROGRESS - Trl.TermDataRepresentation aims to create a general-purpose data representation system based on the definition of terms. These terms will be easily accessable to parsing and automated theorem proving and will be human readable. The eventual aim of this data representation is to be on par with XML and JSON.</PackageDescription>
+    <Description>NB: WORK IN PROGRESS - Trl.TermDataRepresentation aims to create a general-purpose data representation system based on the definition of terms. These terms will be easily accessable to parsing and automated theorem proving and will be human readable. The eventual aim of this data representation is to be on par with XML and JSON.</Description>
+    <Copyright>Wikus Coetser, 2020, MIT Licence</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- TODO: - <PackageReleaseNotes></PackageReleaseNotes>-->
+    <!-- <IncludeSource>True</IncludeSource> -->
+    <IsTool>False</IsTool>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/WCoetser/Trl.TermDataRepresentation</RepositoryUrl>
+    <RepositoryBranch>master</RepositoryBranch>
+    <!-- TODO: <MinClientVersion></MinClientVersion>-->
+    <tags>Terms Data_Representation</tags>
+    <PackageTags>Terms Data_Representation</PackageTags>
+    <PackageProjectUrl>https://github.com/WCoetser/Trl.TermDataRepresentation</PackageProjectUrl>
+    <PackageReleaseNotes>NB: WORK IN PROGRESS - Trl.TermDataRepresentation aims to create a general-purpose data representation system based on the definition of terms. These terms will be easily accessable to parsing and automated theorem proving and will be human readable. The eventual aim of this data representation is to be on par with XML and JSON.</PackageReleaseNotes>
+
+    <!-- END NUGET METADATA -->
+
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Trl.IntegerMapper" Version="1.0.0" />
     <PackageReference Include="Trl.PegParser" Version="1.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
