@@ -5,3 +5,4 @@ Trl.TermDataRepresentation.Tests/obj/
 Trl.TermDataRepresentation.Tests/bin/
 UnitTestCoverageReport/
 nupkg/
+.vscode/
