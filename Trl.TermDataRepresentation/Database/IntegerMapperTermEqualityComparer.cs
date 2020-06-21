@@ -31,10 +31,13 @@ namespace Trl.TermDataRepresentation.Database
                 return false;
             }
             bool argsMatch = true;
-            for (int i = 0; i < x.Arguments.Length && argsMatch; i++)
+            if (x.Arguments != null)
             {
-                // Term arguments must have identifiers.
-                argsMatch = x.Arguments[i].TermIdentifier.Value == y.Arguments[i].TermIdentifier.Value;
+                for (int i = 0; i < x.Arguments.Length && argsMatch; i++)
+                {
+                    // Term arguments must have identifiers.
+                    argsMatch = x.Arguments[i].TermIdentifier.Value == y.Arguments[i].TermIdentifier.Value;
+                }
             }
             return argsMatch;
         }

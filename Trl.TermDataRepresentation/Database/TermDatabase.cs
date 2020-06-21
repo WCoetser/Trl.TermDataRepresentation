@@ -33,7 +33,15 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public ITrlTerm ReadTerm(ulong termIdentifier)
         {
-            throw new NotImplementedException();
+            var term = _termMapper.ReverseMap(termIdentifier);
+            var termName = _stringMapper.ReverseMap(term.Name.AssociatedStringValue);
+            return term.Name.Type switch
+            {
+                SymbolType.Identifier => new Identifier { Name = termName },
+                SymbolType.String => new StringValue { Value = termName },
+                SymbolType.Number => new NumericValue { Value = termName },
+                _ => throw new NotImplementedException()
+            };
         }
 
         /// <summary>
@@ -41,7 +49,29 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public ulong SaveTerm(ITrlTerm parseResult)
         {
-            throw new NotImplementedException();
+            Term t;
+            if (parseResult is Identifier id)
+            {
+                ulong idName = _stringMapper.Map(id.Name);
+                t = new Term(new Symbol(idName, SymbolType.Identifier), null);
+            }
+            else if (parseResult is StringValue str)
+            {
+                ulong strName = _stringMapper.Map(str.Value);
+                t = new Term(new Symbol(strName, SymbolType.String), null);
+            }
+            else if (parseResult is NumericValue num)
+            {
+                ulong numName = _stringMapper.Map(num.Value);
+                t = new Term(new Symbol(numName, SymbolType.Number), null);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+            var termId = _termMapper.Map(t);
+            t.Name.TermIdentifier = termId;
+            return termId;
         }
     }
 }

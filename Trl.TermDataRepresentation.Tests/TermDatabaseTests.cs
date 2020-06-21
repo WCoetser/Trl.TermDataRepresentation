@@ -50,5 +50,20 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             Assert.NotEqual(testIdentifier1, testIdentifier2);
         }
+
+        [Fact]
+        public void ShouldNotAssignSameIdentifierToStringAndIdentifierWithSameValue()
+        {
+            // Arrange
+            var id = Parse("_123;");
+            var str = Parse("\"_123\";");
+
+            // Act
+            var testIdentifier1 = _termDatabase.SaveTerm((ITrlTerm)id);
+            var testIdentifier2 = _termDatabase.SaveTerm((ITrlTerm)str);
+
+            // Assert
+            Assert.NotEqual(testIdentifier1, testIdentifier2);
+        }
     }
 }
