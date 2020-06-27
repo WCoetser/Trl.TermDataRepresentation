@@ -2,8 +2,8 @@
 
 namespace Trl.TermDataRepresentation.Parser.AST
 {
-    public class Statements : ITrlParseResult
+    public class StatementList : ITrlParseResult
     {
-        public List<ITrlParseResult> StatementList { get; set; }
+        public List<Statement> Statements { get; set; }
     }
 }

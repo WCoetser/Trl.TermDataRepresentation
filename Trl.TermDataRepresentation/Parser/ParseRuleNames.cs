@@ -8,6 +8,7 @@
         Identifier,
         Start,
         Statement,
-        Term
+        Term,
+        Label
     }
 }

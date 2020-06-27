@@ -17,8 +17,8 @@ namespace Trl.TermDataRepresentation.Tests
             _parser = new TrlParser();
         }
 
-        private ITrlParseResult Parse(string input)
-            => _parser.ParseToAst(input).Statements.StatementList.Single();
+        private Statement ParseStatement(string input)
+            => _parser.ParseToAst(input).Statements.Statements.Single();
 
         [InlineData("123;")]
         [InlineData("_abc;")]
@@ -27,10 +27,10 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldAssignSameIdentifierToIdenticalTerms(string testInput)
         {
             // Act
-            var testAst1 = Parse(testInput);
-            var testIdentifier1 = _termDatabase.SaveTerm((ITrlTerm)testAst1);
-            var testAst2 = Parse(testInput);
-            var testIdentifier2 = _termDatabase.SaveTerm((ITrlTerm)testAst2);
+            var testAst1 = ParseStatement(testInput);
+            var testIdentifier1 = _termDatabase.SaveTerm(testAst1.Term);
+            var testAst2 = ParseStatement(testInput);
+            var testIdentifier2 = _termDatabase.SaveTerm(testAst2.Term);
 
             // Assert
             Assert.Equal(testIdentifier1, testIdentifier2);
@@ -40,12 +40,12 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldNotAssignSameIdentifierToStringAndNumberWithSameValue()
         {
             // Arrange
-            var num = Parse("123;");
-            var str = Parse("\"123\";");
+            var num = ParseStatement("123;");
+            var str = ParseStatement("\"123\";");
 
             // Act
-            var testIdentifier1 = _termDatabase.SaveTerm((ITrlTerm)num);
-            var testIdentifier2 = _termDatabase.SaveTerm((ITrlTerm)str);
+            var testIdentifier1 = _termDatabase.SaveTerm(num.Term);
+            var testIdentifier2 = _termDatabase.SaveTerm(str.Term);
 
             // Assert
             Assert.NotEqual(testIdentifier1, testIdentifier2);
@@ -55,12 +55,12 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldNotAssignSameIdentifierToStringAndIdentifierWithSameValue()
         {
             // Arrange
-            var id = Parse("_123;");
-            var str = Parse("\"_123\";");
+            var id = ParseStatement("_123;");
+            var str = ParseStatement("\"_123\";");
 
             // Act
-            var testIdentifier1 = _termDatabase.SaveTerm((ITrlTerm)id);
-            var testIdentifier2 = _termDatabase.SaveTerm((ITrlTerm)str);
+            var testIdentifier1 = _termDatabase.SaveTerm(id.Term);
+            var testIdentifier2 = _termDatabase.SaveTerm(str.Term);
 
             // Assert
             Assert.NotEqual(testIdentifier1, testIdentifier2);

@@ -14,6 +14,7 @@
         Comma,
         Dot,
         Whitespace,
-        SemiColon
+        SemiColon,
+        Colon
     }
 }

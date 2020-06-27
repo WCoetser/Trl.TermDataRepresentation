@@ -4,6 +4,9 @@ namespace Trl.TermDataRepresentation.Parser.AST
 {
     public interface ITrlTerm
     {
-        void WriteToStream(StreamWriter outputStream);
+        /// <summary>
+        /// Used to deserialize a term to human readable form.
+        /// </summary>
+        void WriteToStream(StreamWriter outputStream);        
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
@@ -27,8 +28,8 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             var statements = result.Statements;
             Assert.True(result.Succeed);
-            Assert.Single(statements.StatementList);
-            NumericValue str = (NumericValue)statements.StatementList.Single();
+            Assert.Single(statements.Statements);
+            NumericValue str = (NumericValue)statements.Statements.Single().Term;
             Assert.Equal(inputString, str.Value);
         }
 
@@ -44,8 +45,8 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             var statements = result.Statements;
             Assert.True(result.Succeed);
-            Assert.Single(statements.StatementList);
-            StringValue str = (StringValue)statements.StatementList.Single();
+            Assert.Single(statements.Statements);
+            StringValue str = (StringValue)statements.Statements.Single().Term;
             Assert.Equal(inputString[1..^1], str.Value);
         }
 
@@ -62,8 +63,8 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             var statements = result.Statements;
             Assert.True(result.Succeed);
-            Assert.Single(statements.StatementList);
-            Identifier id = (Identifier)statements.StatementList.Single();
+            Assert.Single(statements.Statements);
+            Identifier id = (Identifier)statements.Statements.Single().Term;
             Assert.Equal(inputString, id.Name);
         }
 
@@ -86,7 +87,23 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             Assert.True(result.Succeed);
             var statements = result.Statements;
-            Assert.Empty(statements.StatementList);
+            Assert.Empty(statements.Statements);
+        }
+
+        [InlineData("l1 : \"Testing 123\";", new[] { "l1" })]
+        [InlineData("l1.l2, l2 : \"Testing 123\";", new[] { "l1.l2", "l2" })]
+        [InlineData("l1.l2, l2, l3 : \"Testing 123\";", new[] { "l1.l2", "l2", "l3" })]
+        [Theory]
+        public void ShouldParseWithLabel(string parseInput, string[] expectedLabels)
+        {
+            // Act
+            var result = _parser.ParseToAst(parseInput);
+
+            // Assert
+            Assert.True(result.Succeed);
+            var statement = result.Statements.Statements.Single();
+            Assert.True(statement.Label.Identifiers.Select(id => id.Name).SequenceEqual(expectedLabels));
+
         }
     }
 }
