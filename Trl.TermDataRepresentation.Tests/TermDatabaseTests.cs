@@ -20,6 +20,35 @@ namespace Trl.TermDataRepresentation.Tests
         private Statement ParseStatement(string input)
             => _parser.ParseToAst(input).Statements.Statements.Single();
 
+        [Fact]
+        public void ShouldSaveAndLoadTermByLabel()
+        {
+            // Arrange
+            var testAst1 = ParseStatement("l1,l2: 123;");
+            _termDatabase.SaveStatement(testAst1);
+
+            // Act
+            var statementList = _termDatabase.ReadStatementsForLabel("l1");
+
+            // Assert
+            Assert.Single(statementList.Statements);
+            Assert.Equal("﻿l1,l2 : 123;\r\n", statementList.ToSourceCode());
+        }
+
+        [Fact]
+        public void ShouldReturnNullIfLabelNotFound()
+        {
+            // Arrange
+            var testAst1 = ParseStatement("l1,l2: 123;");
+
+            // Act
+            _termDatabase.SaveStatement(testAst1);
+            var statementList = _termDatabase.ReadStatementsForLabel("l3");
+
+            // Assert
+            Assert.Null(statementList);
+        }
+
         [InlineData("123;")]
         [InlineData("_abc;")]
         [InlineData("\"Testing 123\";")]

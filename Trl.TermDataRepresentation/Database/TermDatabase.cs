@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Trl.IntegerMapper;
 using Trl.IntegerMapper.EqualityComparerIntegerMapper;
 using Trl.IntegerMapper.StringIntegerMapper;
@@ -22,10 +24,80 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         private readonly IIntegerMapper<Term> _termMapper;
 
+        /// <summary>
+        /// Maps integers for string labels to integers for term identifiers.
+        /// </summary>
+        private readonly Dictionary<ulong, HashSet<ulong>> _labelToTermMapper;
+
         public TermDatabase()
         {
             _stringMapper = new StringMapper();
             _termMapper = new EqualityComparerMapper<Term>(new IntegerMapperTermEqualityComparer());
+            _labelToTermMapper = new Dictionary<ulong, HashSet<ulong>>();
+        }
+
+        /// <summary>
+        /// Saves a statement.
+        /// </summary>
+        public void SaveStatement(Statement statement)
+        {
+            ulong termIdentifier = SaveTerm(statement.Term);
+            var term = _termMapper.ReverseMap(termIdentifier);
+            foreach (var identifier in statement.Label.Identifiers)
+            {
+                ulong labelId = _stringMapper.Map(identifier.Name);
+                if (!_labelToTermMapper.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
+                {
+                    referencedTerms = new HashSet<ulong>();
+                    _labelToTermMapper.Add(labelId, referencedTerms);
+                }
+                term.Labels.Add(labelId);
+                referencedTerms.Add(termIdentifier);
+            }
+        }
+
+        /// <summary>
+        /// Gets the statement for the label, if it does not exist returns null.
+        /// </summary>
+        public StatementList ReadStatementsForLabel(string label)
+        {
+            if (!_stringMapper.TryGetMappedValue(label, out ulong? labelInteger))
+            {
+                return null;
+            }
+
+            if (!_labelToTermMapper.TryGetValue(labelInteger.Value, out HashSet<ulong> associatedTermIds)
+                || !associatedTermIds.Any())
+            {
+                return null;
+            }
+
+            var returnStatements = new StatementList
+            {
+                Statements = new List<Statement>()
+            };
+
+            foreach (var termId in associatedTermIds)
+            {
+                var returnLabel = new Label
+                {
+                    Identifiers = new List<Identifier>()
+                };
+                var dbTerm = _termMapper.ReverseMap(termId);
+                foreach (var labelId in dbTerm.Labels)
+                {
+                    returnLabel.Identifiers.Add(new Identifier
+                    {
+                        Name = _stringMapper.ReverseMap(labelId)
+                    });
+                }
+                returnStatements.Statements.Add(new Statement
+                {
+                    Label = returnLabel,
+                    Term = ReadTerm(termId)
+                });
+            }
+            return returnStatements;
         }
 
         /// <summary>

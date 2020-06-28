@@ -31,7 +31,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Trl.IntegerMapper" Version="1.0.0" />
+    <PackageReference Include="Trl.IntegerMapper" Version="1.0.1" />
     <PackageReference Include="Trl.PegParser" Version="1.1.0" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Trl.TermDataRepresentation.Database
 {
@@ -9,6 +10,13 @@ namespace Trl.TermDataRepresentation.Database
     /// </summary>
     public class Term
     {
+        private Lazy<HashSet<ulong>> _labels = new Lazy<HashSet<ulong>>(() => new HashSet<ulong>());
+
+        /// <summary>
+        /// Mapped integers for string labels assocated with this term.
+        /// </summary>
+        public HashSet<ulong> Labels => _labels.Value;
+
         /// <summary>
         /// Identifies what type of term this is and the name of the term is.
         /// </summary>
