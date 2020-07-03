@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
 
@@ -11,19 +12,17 @@ namespace Trl.Serialization.Translator
     internal class ObjectTranslator
     {
         internal ITrlParseResult BuildAst<TObject>(TObject inputObject, string rootLabel)
-            => inputObject switch
-                {
-                    string inputString => ConvertString(inputString, rootLabel),
-                    _ => throw new NotImplementedException()
-                };
-
-        private ITrlParseResult ConvertString(string inputObject, string rootLabel) 
-            => new Statement
+        {
+            ITrlParseResult expression = (inputObject, IsNumeric(inputObject)) switch
             {
-                Term = new StringValue
-                {
-                    Value = Convert.ToString(inputObject)
-                },
+                (string inputString, _) => ConvertString(inputString),
+                (_, true) => ConvertNumber(inputObject),
+                _ => throw new NotImplementedException()
+            };
+
+            return new Statement
+            {
+                Term = (ITrlTerm)expression,
                 Label = new Label
                 {
                     Identifiers = new List<Identifier>
@@ -35,5 +34,33 @@ namespace Trl.Serialization.Translator
                             }
                 }
             };
+        }
+
+        private ITrlParseResult ConvertNumber<TObject>(TObject inputObject)
+            => new NumericValue
+            {
+                Value = Convert.ToString(inputObject)
+            };
+
+        private static bool IsNumeric<TObject>(TObject inputObject) 
+            => inputObject is sbyte
+            || inputObject is byte
+            || inputObject is short
+            || inputObject is ushort
+            || inputObject is int
+            || inputObject is uint
+            || inputObject is long
+            || inputObject is ulong
+            || inputObject is BigInteger
+            || inputObject is decimal
+            || inputObject is float
+            || inputObject is double;
+
+        private ITrlParseResult ConvertString(string inputObject)
+            => new StringValue
+            {
+                Value = Convert.ToString(inputObject)
+            };
+            
     }
 }
