@@ -17,10 +17,11 @@ namespace Trl.TermDataRepresentation.Parser.AST
             if (Label != null)
             {
                 Label.WriteToStream(outputStream);
-                outputStream.Write(" : ");
+                outputStream.Write(": ");
             }
 
             Term.WriteToStream(outputStream);
+            outputStream.Write(";");
         }
     }
 }

@@ -32,7 +32,7 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.Single(statementList.Statements);
-            Assert.Equal("﻿l1,l2 : 123;\r\n", statementList.ToSourceCode());
+            Assert.Equal("﻿l1,l2: 123;", statementList.ToSourceCode());
         }
 
         [Fact]

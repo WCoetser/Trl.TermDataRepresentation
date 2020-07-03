@@ -7,3 +7,7 @@ UnitTestCoverageReport/
 nupkg/
 .vscode/
 Trl.TermDataRepresentation.Tests/TestResults/
+Trl.Serialization/bin/
+Trl.Serialization/obj/
+Trl.Serialization.Tests/bin/
+Trl.Serialization.Tests/obj/
