@@ -19,7 +19,7 @@ namespace Trl.Serialization
             using var memIn = new MemoryStream();
             using var streamWriter = new StreamWriter(memIn, _encoding);
             streamWriter.Write(input);
-            memIn.Flush();
+            streamWriter.Flush();
             memIn.Seek(0, SeekOrigin.Begin);
             using var streamReader = new StreamReader(memIn, _encoding);
             return _stringStreamSerializer.Deserialize<TObject>(streamReader, rootLabel);

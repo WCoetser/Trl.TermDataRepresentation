@@ -57,6 +57,18 @@ namespace Trl.TermDataRepresentation.Database
         }
 
         /// <summary>
+        /// Saves a list of statemnents.
+        /// </summary>
+        /// <param name="statementList"></param>
+        public void SaveStatements(StatementList statementList)
+        {
+            foreach (var statement in statementList.Statements)
+            {
+                SaveStatement(statement);
+            }
+        }
+
+        /// <summary>
         /// Gets the statement for the label, if it does not exist returns null.
         /// </summary>
         public StatementList ReadStatementsForLabel(string label)

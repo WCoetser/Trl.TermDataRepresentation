@@ -16,7 +16,8 @@ namespace Trl.Serialization
 
         public TObject Deserialize<TObject>(StreamReader input, string rootLabel = "root")
         {
-            throw new NotImplementedException();
+            var inputStr = input.ReadToEnd();
+            return _translator.BuildObject<TObject>(inputStr, rootLabel);
         }
 
         public void Serialize<TObject>(TObject inputObject, StreamWriter outputStream, string rootLabel = "root")
