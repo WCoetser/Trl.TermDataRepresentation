@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Trl.Serialization;
 using Xunit;
 
@@ -66,17 +67,29 @@ namespace Trl.Serializer.Tests
             Assert.Equal("root: 123;", output);
         }
 
-        [Fact]
+        [Fact(Skip = "Under construction")]
         public void ShouldSerializeList()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = new List<int>(new[] { 1, 2, 3 });
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: (1,2,3);", output);
         }
 
-        [Fact]
+        [Fact(Skip = "Under construction")]
         public void ShouldDeserializeList()
         {
             throw new NotImplementedException();
         }
 
+        [Fact(Skip = "Under construction")]
+        public void ShouldDeserializeArray()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
