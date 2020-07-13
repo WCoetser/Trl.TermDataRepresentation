@@ -33,7 +33,9 @@ namespace Trl.TermDataRepresentation.Parser
                 _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Number, new Regex(@"[+-]?\d+\.?\d*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Comma, new Regex(@",", RegexOptions.Compiled)),
-                _pegFacade.Token(TokenNames.Colon, new Regex(@":", RegexOptions.Compiled))
+                _pegFacade.Token(TokenNames.Colon, new Regex(@":", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.OpenRoundBracket, new Regex(@"\(", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.CloseRoundBracket, new Regex(@"\)", RegexOptions.Compiled))
             });
         }
 
@@ -102,6 +104,38 @@ namespace Trl.TermDataRepresentation.Parser
                 }
                 return returnLabel;
             });
+
+            _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.TermList, (matchTokens, subResults, matchedSpec) =>
+            {
+                var listResult = subResults.First().GetSubResults()[1]; // skip over "("
+                var cst = (CommaSeperatedTerms)listResult.GetSubResults()[0];
+                return new TermList
+                {
+                    Terms = cst.Terms
+                };
+            });
+
+            _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.CommaSeperatedTerms, (matchTokens, subResults, matchedSpec) =>
+            {
+                var termList = new CommaSeperatedTerms
+                {
+                    Terms = new List<ITrlTerm>()
+                };
+                var results = subResults?.FirstOrDefault()?.GetSubResults();
+                var head = results?[0];
+                if (head != null)
+                {
+                    termList.Terms.Add((ITrlTerm)head);
+                    // Skip over commas
+                    var tail = results[1].GetSubResults();
+                    foreach (var tailResult in tail)
+                    {
+                        var term = tailResult.GetSubResults()[1];
+                        termList.Terms.Add((ITrlTerm)term);
+                    }                    
+                }
+                return termList;
+            });
         }
 
         private void CreateParser()
@@ -109,9 +143,11 @@ namespace Trl.TermDataRepresentation.Parser
             const string grammer = @"
 Start => (Statement? [SemiColon])+;
 Statement => Label? Term;
-Term => [Identifier] | [String] | [Number];
-Label => [Identifier] ([Comma] [Identifier])* [Colon]
-";            
+Term => [Identifier] | [String] | [Number] | TermList;
+Label => [Identifier] ([Comma] [Identifier])* [Colon];
+TermList => [OpenRoundBracket] CommaSeperatedTerms [CloseRoundBracket];
+CommaSeperatedTerms => (Term ([Comma] Term)*)?;
+";
             _parser = _pegFacade.Parser(ParseRuleNames.Start, _pegFacade.ParserGenerator.GetParsingRules(grammer));
         }
 

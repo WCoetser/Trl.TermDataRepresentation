@@ -105,5 +105,23 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.True(statement.Label.Identifiers.Select(id => id.Name).SequenceEqual(expectedLabels));
 
         }
+
+        [InlineData("((1,0,0),(0,1,0),(0,0,1));", 3)]
+        [InlineData("(1,2,3,4);", 4)]
+        [InlineData("(\"abc\");", 1)]
+        [InlineData("();", 0)]
+        [Theory]
+        public void ShouldParseList(string parseInput, int expectedLength)
+        {
+            // Act
+            var result = _parser.ParseToAst(parseInput);
+
+            // Assert
+            Assert.True(result.Succeed);
+            var statement = result.Statements.Statements.Single();
+            Assert.IsType<TermList>(statement.Term);
+            var termList = (TermList)statement.Term;
+            Assert.Equal(expectedLength, termList.Terms.Count);
+        }
     }
 }

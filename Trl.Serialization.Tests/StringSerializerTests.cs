@@ -1,4 +1,5 @@
-﻿using Trl.Serialization;
+﻿using System;
+using Trl.Serialization;
 using Xunit;
 
 namespace Trl.Serializer.Tests
@@ -64,5 +65,18 @@ namespace Trl.Serializer.Tests
             // Assert
             Assert.Equal("root: 123;", output);
         }
+
+        [Fact]
+        public void ShouldSerializeList()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void ShouldDeserializeList()
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }
