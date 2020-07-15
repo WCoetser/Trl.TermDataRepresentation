@@ -81,7 +81,19 @@ namespace Trl.Serializer.Tests
         }
 
         [Fact(Skip = "Under construction")]
+        public void ShouldSerializeNestedList()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact(Skip = "Under construction")]
         public void ShouldDeserializeList()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact(Skip = "Under construction")]
+        public void ShouldDeserializeNestedList()
         {
             throw new NotImplementedException();
         }

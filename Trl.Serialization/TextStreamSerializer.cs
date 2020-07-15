@@ -9,20 +9,25 @@ namespace Trl.Serialization
     public class TextStreamSerializer
     {
         private readonly Encoding _encoding;
-        private readonly ObjectTranslator _translator;
+        private readonly ObjectToAstTranslator _objectToAstTranslator;
+        private readonly StringToObjectTranslator _stringToObjectTranslator;
 
         public TextStreamSerializer(Encoding encoding)
-            => (_encoding, _translator) = (encoding, new ObjectTranslator());
+        {
+            _encoding = encoding;
+            _objectToAstTranslator = new ObjectToAstTranslator();
+            _stringToObjectTranslator = new StringToObjectTranslator();
+        }
 
         public TObject Deserialize<TObject>(StreamReader input, string rootLabel = "root")
         {
             var inputStr = input.ReadToEnd();
-            return _translator.BuildObject<TObject>(inputStr, rootLabel);
+            return _stringToObjectTranslator.BuildObject<TObject>(inputStr, rootLabel);
         }
 
         public void Serialize<TObject>(TObject inputObject, StreamWriter outputStream, string rootLabel = "root")
         {
-            ITrlParseResult output = _translator.BuildAst(inputObject, rootLabel);
+            ITrlParseResult output = _objectToAstTranslator.BuildAst(inputObject, rootLabel);
             output.WriteToStream(outputStream);
         }
     }
