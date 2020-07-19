@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Trl.Serialization;
 using Xunit;
 
@@ -67,7 +68,7 @@ namespace Trl.Serializer.Tests
             Assert.Equal("root: 123;", output);
         }
 
-        [Fact(Skip = "Under construction")]
+        [Fact]
         public void ShouldSerializeList()
         {
             // Arrange
@@ -80,10 +81,46 @@ namespace Trl.Serializer.Tests
             Assert.Equal("root: (1,2,3);", output);
         }
 
-        [Fact(Skip = "Under construction")]
+        [Fact]
+        public void ShouldSerializeEmptyList()
+        {
+            // Arrange
+            var input = Enumerable.Empty<int>();
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: ();", output);
+        }
+
+        [Fact]
+        public void ShouldSerializeMixedTypesList()
+        {
+            // Arrange
+            var input = new object[] { "abc", 123, null, new[] { 0x01,0x02,0x03 } };
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: (\"abc\",123,null,(1,2,3));", output);
+        }
+
+        [Fact]
         public void ShouldSerializeNestedList()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = new List<double[]>();
+            input.Add(new double[] { 1, 0, 0 });
+            input.Add(new double[] { 0, 1, 0 });
+            input.Add(new double[] { 0, 0, 1 });
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: ((1,0,0),(0,1,0),(0,0,1));", output);
         }
 
         [Fact(Skip = "Under construction")]
@@ -102,6 +139,19 @@ namespace Trl.Serializer.Tests
         public void ShouldDeserializeArray()
         {
             throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void ShouldSerializeNull()
+        {
+            // Arrange
+            object input = null;
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: null;", output);
         }
     }
 }

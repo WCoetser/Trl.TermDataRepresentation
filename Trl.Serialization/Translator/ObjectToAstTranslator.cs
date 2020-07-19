@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using Trl.TermDataRepresentation.Parser;
@@ -10,12 +11,7 @@ namespace Trl.Serialization.Translator
     {
         internal ITrlParseResult BuildAst<TObject>(TObject inputObject, string rootLabel)
         {
-            ITrlParseResult expression = (inputObject, IsNumeric(inputObject)) switch
-            {
-                (string inputString, _) => ConvertStringToAst(inputString),
-                (_, true) => ConvertNumberToAst(inputObject),
-                _ => throw new NotImplementedException()
-            };
+            ITrlParseResult expression = BuildAstForObject(inputObject);
 
             return new Statement
             {
@@ -33,20 +29,50 @@ namespace Trl.Serialization.Translator
             };
         }
 
-        private ITrlParseResult ConvertNumberToAst<TObject>(TObject inputObject)
-            => new NumericValue
+        private ITrlParseResult BuildAstForObject(object inputObject)
+        {
+            if (inputObject == null)
             {
-                Value = Convert.ToString(inputObject)
-            };
-
-
-        private ITrlParseResult ConvertStringToAst(string inputObject)
-            => new StringValue
+                return new Identifier
+                {
+                    Name = "null"
+                };
+            }
+            else if (inputObject is string)
             {
-                Value = Convert.ToString(inputObject)
-            };
+                return new StringValue
+                {
+                    Value = Convert.ToString(inputObject)
+                };
+            }
+            // NB: IEnumerable must be after string because string is IEnumerable
+            else if (inputObject is IEnumerable)
+            {
+                var list = new TermList()
+                {
+                    Terms = new List<ITrlTerm>()
+                };
+                var inputEnumerable = (IEnumerable)inputObject;
+                foreach (var item in inputEnumerable)
+                {
+                    list.Terms.Add((ITrlTerm)BuildAstForObject(item));
+                }
+                return list;
+            }
+            else if (IsNumeric(inputObject))
+            {
+                return new NumericValue
+                {
+                    Value = Convert.ToString(inputObject)
+                };
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
 
-        private static bool IsNumeric<TObject>(TObject inputObject)
+        private static bool IsNumeric(object inputObject)
             => inputObject is sbyte
             || inputObject is byte
             || inputObject is short
