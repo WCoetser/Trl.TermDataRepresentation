@@ -123,22 +123,41 @@ namespace Trl.Serializer.Tests
             Assert.Equal("root: ((1,0,0),(0,1,0),(0,0,1));", output);
         }
 
-        [Fact(Skip = "Under construction")]
+        [Fact]
         public void ShouldDeserializeList()
         {
             throw new NotImplementedException();
         }
 
-        [Fact(Skip = "Under construction")]
+        [Fact]
         public void ShouldDeserializeNestedList()
         {
             throw new NotImplementedException();
         }
 
-        [Fact(Skip = "Under construction")]
+        [Fact]
         public void ShouldDeserializeArray()
         {
             throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void ShouldDeserializeMixedList()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void ShouldDeserializeNull()
+        {
+            // Arrange
+            string input = "root: null;";
+
+            // Act
+            var output = _serializer.Deserialize<int?>(input);
+
+            // Assert
+            Assert.Null(output);
         }
 
         [Fact]

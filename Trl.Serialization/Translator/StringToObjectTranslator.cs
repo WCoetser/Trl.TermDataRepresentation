@@ -30,30 +30,42 @@ namespace Trl.Serialization.Translator
             {
                 return default;
             }
-            if (typeof(TObject).IsAssignableFrom(typeof(ICollection<>)))
+            if (statementList.Statements.Count != 1)
+            {
+                throw new Exception("More than one result for given label");
+            }
+            return (TObject)ConvertToObject(typeof(TObject), statementList.Statements.Single().Term);
+        }
+
+        private object ConvertToObject(Type targetType, ITrlTerm term)
+        {            
+            if (targetType.IsAssignableFrom(typeof(ICollection<>)))
             {
                 // TODO: Implement collection deserialization
                 throw new NotImplementedException();
             }
             else
-            {
-                if (statementList.Statements.Count != 1)
+            {                
+                return term switch
                 {
-                    throw new Exception("More than one result for given label, and output object type is not a collection type.");
-                }
-
-                var statement = statementList.Statements.Single();
-                return statement.Term switch
-                {
-                    StringValue str => ConvertToStringOrNumericObject<TObject>(str.Value),
-                    NumericValue num => ConvertToStringOrNumericObject<TObject>(num.Value),
+                    StringValue str => ConvertToStringOrNumericObject(targetType, str.Value),
+                    NumericValue num => ConvertToStringOrNumericObject(targetType, num.Value),
+                    Identifier id => ConvertIdentifier(targetType, id),
                     _ => throw new NotImplementedException()
                 };
             }
         }
 
-        internal TObject ConvertToStringOrNumericObject<TObject>(string value)
-            => (TObject)Convert.ChangeType(value, typeof(TObject));
+        private object ConvertIdentifier(Type _, Identifier id)
+        {
+            return id.Name switch
+            {
+                "null" => null,
+                _ => throw new NotImplementedException()
+            };
+        }
 
+        internal object ConvertToStringOrNumericObject(Type targetType, string value)
+            => Convert.ChangeType(value, targetType);
     }
 }
