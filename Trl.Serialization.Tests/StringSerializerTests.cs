@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Trl.Serialization;
@@ -126,25 +127,63 @@ namespace Trl.Serializer.Tests
         [Fact]
         public void ShouldDeserializeList()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = "root: (1,2,3);";
+                
+            // Act
+            var output = _serializer.Deserialize<List<int>>(input);
+
+            // Assert
+            Assert.True(Enumerable.SequenceEqual(new[] { 1, 2, 3 }, output));
+
         }
 
         [Fact]
         public void ShouldDeserializeNestedList()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = "root: ((1,0,0),(0,1,0),(0,0,1));";
+
+            // Act
+            var output = _serializer.Deserialize<List<double[]>>(input);
+
+            // Assert
+            Assert.Equal(3, output.Count);
+            Assert.True(Enumerable.SequenceEqual(new double[] { 1, 0, 0 }, output[0]));
+            Assert.True(Enumerable.SequenceEqual(new double[] { 0, 1, 0 }, output[1]));
+            Assert.True(Enumerable.SequenceEqual(new double[] { 0, 0, 1 }, output[2]));
         }
 
         [Fact]
         public void ShouldDeserializeArray()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = "root: (1,2,3);";
+
+            // Act
+            var output = _serializer.Deserialize<int[]>(input);
+
+            // Assert
+            Assert.True(Enumerable.SequenceEqual(new[] { 1, 2, 3 }, output));
         }
 
         [Fact]
         public void ShouldDeserializeMixedList()
         {
-            throw new NotImplementedException();
+            // Arrange
+            var input = "root: (\"abc\",123,null,(1,2,3));";            
+
+            // Act
+            var output = _serializer.Deserialize<List<object>>(input);
+
+            // Assert
+            Assert.Equal(4, output.Count);
+            Assert.Equal("abc", output[0]);
+            Assert.Equal((decimal)123, output[1]);
+            Assert.Null(output[2]);
+            Assert.Equal("1", ((IList<object>)output[3])[0].ToString());
+            Assert.Equal("2", ((IList<object>)output[3])[1].ToString());
+            Assert.Equal("3", ((IList<object>)output[3])[2].ToString());
         }
 
         [Fact]

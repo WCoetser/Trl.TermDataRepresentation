@@ -44,15 +44,15 @@ namespace Trl.TermDataRepresentation.Database
 
         public int GetHashCode(Term x)
         {
-            // Term identifier may not be available
+            // Term identifier may not be available for root term
             var hash = new HashCode();
             hash.Add(x.Name.AssociatedStringValue);
             if (x.Arguments != null)
             {
+                // Arguments must always have term identifiers
                 for (int i = 0; i < x.Arguments.Length; i++)
                 {
-                    hash.Add(x.Arguments[i].AssociatedStringValue);
-                    hash.Add(x.Arguments[i].Type);
+                    hash.Add(x.Arguments[i].TermIdentifier.Value);
                 }
             }
             return hash.ToHashCode();

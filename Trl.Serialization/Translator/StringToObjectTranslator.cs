@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Trl.TermDataRepresentation.Database;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
@@ -39,21 +40,44 @@ namespace Trl.Serialization.Translator
 
         private object ConvertToObject(Type targetType, ITrlTerm term)
         {            
-            if (targetType.IsAssignableFrom(typeof(ICollection<>)))
+            return term switch
             {
-                // TODO: Implement collection deserialization
-                throw new NotImplementedException();
-            }
-            else
-            {                
-                return term switch
+                StringValue str => str.Value,
+                NumericValue num => ConvertToNumeric(targetType, num.Value),
+                Identifier id => ConvertIdentifier(targetType, id),
+                TermList termList => ConvertToCollectionOrArray(targetType, termList),
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private object ConvertToCollectionOrArray(Type targetType, TermList termList)
+        {
+            bool isTargetObject = targetType.IsAssignableFrom(typeof(object));
+
+            // Array case
+            if (targetType.IsArray || isTargetObject)
+            {
+                var arrayElementType = isTargetObject ? typeof(object) : targetType.GetElementType();
+                Array outputArray = Array.CreateInstance(arrayElementType, termList.Terms.Count);
+                for (int i = 0; i < termList.Terms.Count; i++)
                 {
-                    StringValue str => ConvertToStringOrNumericObject(targetType, str.Value),
-                    NumericValue num => ConvertToStringOrNumericObject(targetType, num.Value),
-                    Identifier id => ConvertIdentifier(targetType, id),
-                    _ => throw new NotImplementedException()
-                };
+                    outputArray.SetValue(ConvertToObject(arrayElementType, termList.Terms[i]), i);
+                }
+                return outputArray;
             }
+
+            // ICollection case
+            var constructorInfo = targetType.GetConstructor(Array.Empty<Type>());
+            var collectionObject = constructorInfo.Invoke(Array.Empty<object>());
+            var genericArg = targetType.GenericTypeArguments.Single();
+            var addMethod = targetType.GetMethod("Add", BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance);
+            foreach (ITrlTerm subTerm in termList.Terms)
+            {
+                var collectionItem = ConvertToObject(genericArg, subTerm);
+                addMethod.Invoke(collectionObject, new[] { collectionItem });
+            }
+
+            return collectionObject;
         }
 
         private object ConvertIdentifier(Type _, Identifier id)
@@ -65,7 +89,13 @@ namespace Trl.Serialization.Translator
             };
         }
 
-        internal object ConvertToStringOrNumericObject(Type targetType, string value)
-            => Convert.ChangeType(value, targetType);
+        internal object ConvertToNumeric(Type targetType, string value)
+        {
+            if (targetType.IsAssignableFrom(typeof(object)))
+            {
+                return Convert.ChangeType(value, typeof(decimal));
+            }
+            return Convert.ChangeType(value, targetType);
+        }
     }
 }

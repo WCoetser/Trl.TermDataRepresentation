@@ -41,7 +41,7 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public void SaveStatement(Statement statement)
         {
-            ulong termIdentifier = SaveTerm(statement.Term);
+            ulong termIdentifier = SaveTerm(statement.Term).TermIdentifier.Value;
             var term = _termMapper.ReverseMap(termIdentifier);
             foreach (var identifier in statement.Label.Identifiers)
             {
@@ -124,38 +124,45 @@ namespace Trl.TermDataRepresentation.Database
                 SymbolType.Identifier => new Identifier { Name = termName },
                 SymbolType.String => new StringValue { Value = termName },
                 SymbolType.Number => new NumericValue { Value = termName },
+                SymbolType.TermList => new TermList { Terms = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList() },
                 _ => throw new NotImplementedException()
             };
         }
 
         /// <summary>
-        /// Saves an AST term and returns it's symbol identifier (see <see cref="Symbol.TermIdentifier"/>).
+        /// Saves an AST term and returns a symbol uniquely identifying it.
         /// </summary>
-        public ulong SaveTerm(ITrlTerm parseResult)
+        public Symbol SaveTerm(ITrlTerm parseResult)
         {
-            Term t;
+            Term term;
             if (parseResult is Identifier id)
             {
                 ulong idName = _stringMapper.Map(id.Name);
-                t = new Term(new Symbol(idName, SymbolType.Identifier), null);
+                term = new Term(new Symbol(idName, SymbolType.Identifier), null);
             }
             else if (parseResult is StringValue str)
             {
                 ulong strName = _stringMapper.Map(str.Value);
-                t = new Term(new Symbol(strName, SymbolType.String), null);
+                term = new Term(new Symbol(strName, SymbolType.String), null);
             }
             else if (parseResult is NumericValue num)
             {
                 ulong numName = _stringMapper.Map(num.Value);
-                t = new Term(new Symbol(numName, SymbolType.Number), null);
+                term = new Term(new Symbol(numName, SymbolType.Number), null);
+            }
+            else if (parseResult is TermList termList)
+            {
+                var arguments = termList.Terms.Select(t => SaveTerm(t)).ToArray();
+                term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), arguments);
             }
             else
             {
                 throw new NotImplementedException();
             }
-            var termId = _termMapper.Map(t);
-            t.Name.TermIdentifier = termId;
-            return termId;
+
+            var termId = _termMapper.Map(term);
+            term.Name.TermIdentifier = termId;            
+            return term.Name;
         }
     }
 }

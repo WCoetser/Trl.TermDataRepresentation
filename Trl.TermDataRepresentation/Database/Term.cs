@@ -32,6 +32,18 @@ namespace Trl.TermDataRepresentation.Database
         {
             Name = name;
             Arguments = arguments;
+
+            // Arguments must have identifiers
+            if (arguments != null)
+            {
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    if (!arguments[i].TermIdentifier.HasValue)
+                    {
+                        throw new InvalidOperationException();
+                    }
+                }
+            }
         }
     }
 }

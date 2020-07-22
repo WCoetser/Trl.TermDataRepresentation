@@ -6,9 +6,6 @@
         Number,
         String,
         Term,
-        /// <summary>
-        /// For representing lists of terms.
-        /// </summary>
-        List
+        TermList
     }
 }

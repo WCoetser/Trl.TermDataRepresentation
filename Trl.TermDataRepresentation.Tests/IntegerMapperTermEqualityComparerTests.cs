@@ -1,4 +1,5 @@
-﻿using Trl.TermDataRepresentation.Database;
+﻿using System;
+using Trl.TermDataRepresentation.Database;
 using Xunit;
 
 namespace Trl.TermDataRepresentation.Tests
@@ -58,12 +59,9 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Act
             var equals = _comparer.Equals(term1, term2);
-            var hashCode1 = _comparer.GetHashCode(term1);
-            var hashCode2 = _comparer.GetHashCode(term2);
 
             // Assert
             Assert.False(equals);
-            Assert.NotEqual(hashCode1, hashCode2); // Note: hash collition not expected
         }
 
 
@@ -113,12 +111,44 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Act
             var equals = _comparer.Equals(term1, term2);
-            var hashCode1 = _comparer.GetHashCode(term1);
-            var hashCode2 = _comparer.GetHashCode(term2);
 
             // Assert
             Assert.False(equals);
-            Assert.NotEqual(hashCode1, hashCode2); // Note: hash collition not expected
+        }
+
+        [Fact]
+        public void ShouldRespectHashingAndEqualiyForUnmappedLists()
+        {
+            // Arrange
+            var termName1 = new Symbol(0, SymbolType.TermList);
+            var termName2 = new Symbol(0, SymbolType.TermList);
+            var num1 = new Symbol(1, SymbolType.Number);
+            num1.TermIdentifier = 3;
+            var num2 = new Symbol(1, SymbolType.Number);
+            num2.TermIdentifier = 3;
+            var term1 = new Term(termName1, new[] { num1 });
+            var term2 = new Term(termName2, new[] { num2 });
+
+            // Act
+            var equals = _comparer.Equals(term1, term2);
+
+            // Assert
+            Assert.True(equals);
+        }
+
+        [Fact]
+        public void ShouldThrowExceptionIfTermArgumentsNotMapped()
+        {
+            // Arrange
+            var termName1 = new Symbol(1, SymbolType.Identifier);
+            var termArgs1 = new Symbol(2, SymbolType.Number);
+            termArgs1.TermIdentifier = null; // this should break it
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                var term1 = new Term(termName1, new[] { termArgs1 });
+            });            
         }
     }
 }
