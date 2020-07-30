@@ -123,5 +123,43 @@ namespace Trl.TermDataRepresentation.Tests
             var termList = (TermList)statement.Term;
             Assert.Equal(expectedLength, termList.Terms.Count);
         }
+
+        [InlineData("t1(a,\"a\",123, a(b));", 4, 0)]
+        [InlineData("root: t1(a);", 1, 0)]
+        [InlineData("vertex<x,y,z>(1,2,3);", 3, 3)]
+        [InlineData("date();", 0, 0)]
+        [InlineData("root: random<>();", 0, 0)]
+        [Theory]
+        public void ShouldParseTerm(string parseInput, int expectedArgsCount, int expectedClassMemberMappingsCount)
+        {
+            // Act
+            var result = _parser.ParseToAst(parseInput);
+
+            // Assert
+            Assert.True(result.Succeed);
+            var term = (NonAcTerm)result.Statements.Statements.Single().Term;            
+            Assert.Equal(expectedArgsCount, term.Arguments.Count);
+            Assert.Equal(expectedClassMemberMappingsCount, term.ClassMemberMappings?.ClassMembers.Count ?? 0);
+        }
+
+        [Fact(Skip="Semantic Checks Under Construction")]
+        public void ShouldHaveEqualNumberOfArgumentsAndAnnotations()
+        {
+            // Act
+            var result = _parser.ParseToAst("vertex<x,y>(1,2,3);");
+
+            // Assert
+            Assert.False(result.Succeed);
+        }
+
+        [Fact(Skip = "Semantic Checks Under Construction")]
+        public void ShouldNotAllowNamespacedClassMemberMappings()
+        {
+            // Act
+            var result = _parser.ParseToAst("vertex<coords.x,coords.y,coords.z>(1,2,3);");
+
+            // Assert
+            Assert.False(result.Succeed);
+        }
     }
 }

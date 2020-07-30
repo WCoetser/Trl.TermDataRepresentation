@@ -35,7 +35,9 @@ namespace Trl.TermDataRepresentation.Parser
                 _pegFacade.Token(TokenNames.Comma, new Regex(@",", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Colon, new Regex(@":", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.OpenRoundBracket, new Regex(@"\(", RegexOptions.Compiled)),
-                _pegFacade.Token(TokenNames.CloseRoundBracket, new Regex(@"\)", RegexOptions.Compiled))
+                _pegFacade.Token(TokenNames.CloseRoundBracket, new Regex(@"\)", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.OpenAngleBracket, new Regex(@"\<", RegexOptions.Compiled)),
+                _pegFacade.Token(TokenNames.CloseAngleBracket, new Regex(@"\>", RegexOptions.Compiled))
             });
         }
 
@@ -136,6 +138,52 @@ namespace Trl.TermDataRepresentation.Parser
                 }
                 return termList;
             });
+
+            _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.ClassMemberMapping, (matchTokens, subResults, matchedSpec) =>
+            {
+                var mappings = new ClassMemberMappingsList
+                {
+                    ClassMembers = new List<Identifier>()
+                };
+                var results = subResults?.FirstOrDefault()?.GetSubResults();
+                if (results?[1].GetSubResults()[0] != null)
+                {
+                    var list = results?[1].GetSubResults()[0].GetSubResults();
+                    if (list[0] != null)
+                    {
+                        mappings.ClassMembers.Add((Identifier)list[0]);
+                        var tail = list[1].GetSubResults();
+                        foreach (var tailResult in tail)
+                        {
+                            var id = tailResult.GetSubResults()[1];
+                            mappings.ClassMembers.Add((Identifier)id);
+                        }
+                    }
+                }
+                return mappings;
+            });
+
+            _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.NonACTerm, (matchTokens, subResults, matchedSpec) =>
+            {
+                var term = new NonAcTerm();
+                var concatResults = subResults?.FirstOrDefault()?.GetSubResults();
+                term.TermName = (Identifier)concatResults[0];
+                var tail = concatResults[1].GetSubResults();
+                if (tail.Count == 2)
+                {
+                    term.ClassMemberMappings = (ClassMemberMappingsList)tail[0];
+                    term.Arguments = ((CommaSeperatedTerms)tail[1].GetSubResults()[1].GetSubResults()[0]).Terms;
+                }
+                else if (tail.Count == 1) 
+                {
+                    term.Arguments = ((CommaSeperatedTerms)tail[0]).Terms;
+                }
+                else
+                {
+                    throw new Exception(); // there could only be 1 or 2 results
+                }
+                return term;
+            });
         }
 
         private void CreateParser()
@@ -143,10 +191,12 @@ namespace Trl.TermDataRepresentation.Parser
             const string grammer = @"
 Start => (Statement? [SemiColon])+;
 Statement => Label? Term;
-Term => [Identifier] | [String] | [Number] | TermList;
+Term => NonACTerm | [Identifier] | [String] | [Number] | TermList;
 Label => [Identifier] ([Comma] [Identifier])* [Colon];
 TermList => [OpenRoundBracket] CommaSeperatedTerms [CloseRoundBracket];
 CommaSeperatedTerms => (Term ([Comma] Term)*)?;
+NonACTerm => [Identifier] ClassMemberMapping? [OpenRoundBracket] CommaSeperatedTerms [CloseRoundBracket];
+ClassMemberMapping => [OpenAngleBracket] ([Identifier] ([Comma] [Identifier])*)? [CloseAngleBracket];
 ";
             _parser = _pegFacade.Parser(ParseRuleNames.Start, _pegFacade.ParserGenerator.GetParsingRules(grammer));
         }

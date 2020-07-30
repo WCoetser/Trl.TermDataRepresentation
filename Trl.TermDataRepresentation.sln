@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation.Tests", "Trl.TermDataRepresentation.Tests\Trl.TermDataRepresentation.Tests.csproj", "{DBA3ACE4-5AB0-4D7A-8BDC-A5A1987EA3F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trl.Serialization", "Trl.Serialization\Trl.Serialization.csproj", "{A9A58135-688C-4527-B446-18DC24AFD9C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.Serialization", "Trl.Serialization\Trl.Serialization.csproj", "{A9A58135-688C-4527-B446-18DC24AFD9C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trl.Serialization.Tests", "Trl.Serialization.Tests\Trl.Serialization.Tests.csproj", "{E87B94AA-03A9-4332-9010-14436A03045F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.Serialization.Tests", "Trl.Serialization.Tests\Trl.Serialization.Tests.csproj", "{E87B94AA-03A9-4332-9010-14436A03045F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

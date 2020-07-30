@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <PackageReference Include="Trl.IntegerMapper" Version="1.0.1" />
-    <PackageReference Include="Trl.PegParser" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +39,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Trl.PegParser" Version="1.1.0" />
   </ItemGroup>
 
 </Project>

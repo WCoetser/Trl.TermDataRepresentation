@@ -10,6 +10,8 @@
         Start,
         Statement,
         Term,
-        Label
+        Label,
+        ClassMemberMapping,
+        NonACTerm
     }
 }
