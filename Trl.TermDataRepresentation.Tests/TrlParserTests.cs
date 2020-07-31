@@ -142,24 +142,41 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.Equal(expectedClassMemberMappingsCount, term.ClassMemberMappings?.ClassMembers.Count ?? 0);
         }
 
-        [Fact(Skip="Semantic Checks Under Construction")]
-        public void ShouldHaveEqualNumberOfArgumentsAndAnnotations()
+        [InlineData("vertex<x,y>(1,2,3);")]
+        [InlineData("point(vertex<x,y>(1,2,3));")]
+        [Theory]
+        public void ShouldHaveEqualNumberOfArgumentsAndClassMemberMappings(string input)
         {
             // Act
-            var result = _parser.ParseToAst("vertex<x,y>(1,2,3);");
+            var result = _parser.ParseToAst(input);
 
             // Assert
             Assert.False(result.Succeed);
+            Assert.Single(result.Errors.Select(err => err.Contains(Errors.NumberOfClassMembers)));
         }
 
-        [Fact(Skip = "Semantic Checks Under Construction")]
-        public void ShouldNotAllowNamespacedClassMemberMappings()
+        [InlineData("vertex<coords.x,coords.y,coords.z>(1,2,3);")]
+        [InlineData("point(vertex<coords.x,coords.y,coords.z>(1,2,3));")]
+        [Theory]
+        public void ShouldNotAllowNamespacedClassMemberMappings(string input)
         {
             // Act
-            var result = _parser.ParseToAst("vertex<coords.x,coords.y,coords.z>(1,2,3);");
+            var result = _parser.ParseToAst(input);
 
             // Assert
             Assert.False(result.Succeed);
+            Assert.NotEmpty(result.Errors.Select(err => err.Contains(Errors.NamespacedClassMembers)));
+        }
+
+        [Fact]
+        public void ShouldHaveSyntaxErrorMessageOnParseFail()
+        {
+            // Act
+            var result = _parser.ParseToAst("vertex(1,,3);");
+
+            // Assert
+            Assert.False(result.Succeed);
+            Assert.Single(result.Errors.Select(err => err == Errors.Syntax));
         }
     }
 }

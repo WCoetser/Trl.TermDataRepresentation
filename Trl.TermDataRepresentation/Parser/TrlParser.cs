@@ -6,6 +6,7 @@ using Trl.PegParser;
 using Trl.PegParser.Grammer;
 using Trl.PegParser.Tokenization;
 using Trl.TermDataRepresentation.Parser.AST;
+using Trl.TermDataRepresentation.Parser.SemanticValidations;
 
 namespace Trl.TermDataRepresentation.Parser
 {
@@ -210,13 +211,20 @@ ClassMemberMapping => [OpenAngleBracket] ([Identifier] ([Comma] [Identifier])*)?
             }
             var tokensNoWhitespace = tokenizationResult.MatchedRanges.Where(token => token.TokenName != TokenNames.Whitespace);
             var parseResult = _parser.Parse(tokensNoWhitespace.ToList().AsReadOnly());
-            if (!parseResult.Succeed)
+            var validator = new SemanticValidator();
+            var semanticErrors = validator.GetSemanticErrors(parseResult);
+            if (!parseResult.Succeed || semanticErrors.Count > 0)
             {
-                return new TrlParseResult { Succeed = false };
+                return new TrlParseResult 
+                {
+                    Succeed = false,
+                    Errors = semanticErrors
+                };
             }
             else
             {
-                return new TrlParseResult { 
+                return new TrlParseResult 
+                {
                     Succeed = true, 
                     Statements = (StatementList)parseResult.SemanticActionResult 
                 };
