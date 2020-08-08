@@ -155,6 +155,12 @@ namespace Trl.TermDataRepresentation.Database
                 var arguments = termList.Terms.Select(t => SaveTerm(t)).ToArray();
                 term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), arguments);
             }
+            else if (parseResult is NonAcTerm nonAcTerm)
+            {
+                var arguments = nonAcTerm.Arguments.Select(t => SaveTerm(t)).ToArray();
+                ulong numTermName = _stringMapper.Map(nonAcTerm.TermName.Name);
+                term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments);
+            }
             else
             {
                 throw new NotImplementedException();

@@ -7,7 +7,7 @@ using Trl.TermDataRepresentation.Parser.AST;
 
 namespace Trl.Serialization.Translator
 {
-    class ObjectToAstTranslator
+    internal class ObjectToAstTranslator
     {
         internal ITrlParseResult BuildAst<TObject>(TObject inputObject, string rootLabel)
         {

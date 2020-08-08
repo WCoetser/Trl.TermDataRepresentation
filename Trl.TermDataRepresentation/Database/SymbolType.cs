@@ -5,7 +5,7 @@
         Identifier,
         Number,
         String,
-        Term,
+        NonAcTerm,
         TermList
     }
 }

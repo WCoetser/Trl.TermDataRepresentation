@@ -19,7 +19,14 @@ namespace Trl.TermDataRepresentation.Tests
         }
 
         private Statement ParseStatement(string input)
-            => _parser.ParseToAst(input).Statements.Statements.Single();
+        {
+            var parseResult = _parser.ParseToAst(input);
+            if (!parseResult.Succeed)
+            {
+                throw new Exception(parseResult.Errors.First());
+            }
+            return _parser.ParseToAst(input).Statements.Statements.Single();
+        }            
 
         [Fact]
         public void ShouldSaveAndLoadTermByLabel()
@@ -113,6 +120,53 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.Equal(testIdentifier1, testIdentifier2);
+        }
+
+        [InlineData("a(a(),b(),c());")]
+        [InlineData("a(a(a));")]
+        [InlineData("a(a);")]
+        [InlineData("a();")]
+        [Theory]
+        public void ShouldAssignNonAcTermsToSameTermIdentifier(string testTerm)
+        {
+            // Arrange
+            var lhs = ParseStatement(testTerm);
+            var rhs = ParseStatement(testTerm);
+
+            // Act
+            var testIdentifier1 = _termDatabase.SaveTerm(lhs.Term).TermIdentifier.Value;
+            var testIdentifier2 = _termDatabase.SaveTerm(rhs.Term).TermIdentifier.Value;
+
+            // Assert
+            Assert.Equal(testIdentifier1, testIdentifier2);
+        }
+
+        [Fact]
+        public void ShouldIgnoreFieldMappingsForTermEquality()
+        {
+            var lhs = ParseStatement("point(vertex(1,2,3));");
+            var rhs = ParseStatement("point<coords>(vertex<x,y,z>(1,2,3));");
+
+            // Act
+            var testIdentifier1 = _termDatabase.SaveTerm(lhs.Term).TermIdentifier.Value;
+            var testIdentifier2 = _termDatabase.SaveTerm(rhs.Term).TermIdentifier.Value;
+
+            // Assert
+            Assert.Equal(testIdentifier1, testIdentifier2);
+        }
+
+        [Fact]
+        public void ShouldMapDifferentIdentifiersToTermAndIdWithSameName()
+        {
+            var lhs = ParseStatement("a;");
+            var rhs = ParseStatement("a();");
+
+            // Act
+            var testIdentifier1 = _termDatabase.SaveTerm(lhs.Term).TermIdentifier.Value;
+            var testIdentifier2 = _termDatabase.SaveTerm(rhs.Term).TermIdentifier.Value;
+
+            // Assert
+            Assert.NotEqual(testIdentifier1, testIdentifier2);
         }
     }
 }
