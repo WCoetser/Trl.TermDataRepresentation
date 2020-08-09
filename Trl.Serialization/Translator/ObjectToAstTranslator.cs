@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
 
@@ -29,7 +31,7 @@ namespace Trl.Serialization.Translator
             };
         }
 
-        private ITrlParseResult BuildAstForObject(object inputObject)
+        private ITrlTerm BuildAstForObject(object inputObject)
         {
             if (inputObject == null)
             {
@@ -68,8 +70,53 @@ namespace Trl.Serialization.Translator
             }
             else
             {
-                throw new NotImplementedException();
+                return GenerateNonAcTerm(inputObject);
             }
+        }
+
+        private ITrlTerm GenerateNonAcTerm(object inputObject)
+        {
+            // Assume we are creating a non ac term in the default case
+            var type = inputObject.GetType();
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                                .Where(p => p.CanRead).OrderBy(p => p.Name);
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                                .OrderBy(p => p.Name);
+
+            // Build arguments first
+            var fieldMappingNames = new List<string>();
+            var arguments = new List<ITrlTerm>();
+            foreach (var prop in properties)
+            {
+                var value = prop.GetValue(inputObject);
+                if (value != null)
+                {
+                    fieldMappingNames.Add(prop.Name);
+                    arguments.Add(BuildAstForObject(value));
+                }
+            }
+            foreach (var field in fields)
+            {
+                var value = field.GetValue(inputObject);
+                if (value != null)
+                {
+                    fieldMappingNames.Add(field.Name);
+                    arguments.Add(BuildAstForObject(value));
+                }
+            }
+
+            return new NonAcTerm
+            {
+                TermName = new Identifier
+                {
+                    Name = type.FullName
+                },
+                ClassMemberMappings = new ClassMemberMappingsList
+                {
+                    ClassMembers = fieldMappingNames.Select(name => new Identifier { Name = name }).ToList(),
+                },
+                Arguments = arguments
+            };
         }
 
         private static bool IsNumeric(object inputObject)

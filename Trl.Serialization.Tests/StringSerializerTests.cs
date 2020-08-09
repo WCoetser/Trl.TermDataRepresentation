@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using TestObjects;
 using Trl.Serialization;
 using Xunit;
 
@@ -210,6 +209,58 @@ namespace Trl.Serializer.Tests
 
             // Assert
             Assert.Equal("root: null;", output);
+        }
+
+        [Fact]
+        public void ShouldSerializeClassPublicProperties()
+        {
+            // Arrange
+            var input = new PointPropertyTest { X = 100, Y = 150 };
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: TestObjects.PointPropertyTest<StringVal,X,Y>(\"test\",100,150);", output);
+        }
+
+        [Fact]
+        public void ShouldSerializeStructPublicFields()
+        {
+            // Arrange
+            var input = new PointFieldTest { X = 100, Y = 150 };
+
+            // Act
+            var output = _serializer.Serialize(input);
+
+            // Assert
+            Assert.Equal("root: TestObjects.PointFieldTest<StringVal,X,Y>(\"test\",100,150);", output);
+        }
+
+        [Fact]
+        public void ShouldSerializeClassToTerm()
+        {
+            // Arrange
+            var address = new Address
+            {
+                Country = "CountryName",
+                Line1 = "Line1",
+                Line2 = null, // null is not in the output string
+                State = "State",
+                PostalCode = 1234
+            };
+            var contact = new ContactInfo
+            {
+                Address = address,
+                Email = "abc@def.com",
+                Name = "Test Name"
+            };
+
+            // Act
+            var output = _serializer.Serialize(contact);
+
+            // Assert
+            Assert.Equal("root: TestObjects.ContactInfo<Address,Email,Name>(TestObjects.Address<Country,Line1,PostalCode,State>(\"CountryName\",\"Line1\",1234,\"State\"),\"abc@def.com\",\"Test Name\");", output);
         }
     }
 }
