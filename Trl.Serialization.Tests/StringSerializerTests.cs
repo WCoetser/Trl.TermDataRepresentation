@@ -262,5 +262,37 @@ namespace Trl.Serializer.Tests
             // Assert
             Assert.Equal("root: TestObjects.ContactInfo<Address,Email,Name>(TestObjects.Address<Country,Line1,PostalCode,State>(\"CountryName\",\"Line1\",1234,\"State\"),\"abc@def.com\",\"Test Name\");", output);
         }
+
+        [Fact]
+        public void ShouldDeserializePropertiesToTerm()
+        {
+            // Arrange
+            var input = "root: PointPropertyTest<X,Y,StringVal>(1,2,\"test2\");";
+
+            // Act
+            var output = _serializer.Deserialize<PointPropertyTest>(input);
+
+            // Assert
+            Assert.NotNull(output);
+            Assert.Equal(1, output.X);
+            Assert.Equal(2, output.Y);
+            Assert.Equal("test2", PointPropertyTest.StringVal);
+        }
+
+        [Fact]
+        public void ShouldDeserializeFieldsToTerm()
+        {
+            // Arrange
+            var input = "root: PointFieldTest<X,Y,StringVal>(1,2,\"test2\");";
+
+            // Act
+            var output = _serializer.Deserialize<PointFieldTest>(input);
+
+            // Assert
+            Assert.NotNull(output);
+            Assert.Equal(1, output.X);
+            Assert.Equal(2, output.Y);
+            Assert.Equal("test2", PointFieldTest.StringVal);
+        }
     }
 }

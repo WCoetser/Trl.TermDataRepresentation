@@ -11,6 +11,8 @@ namespace Trl.Serialization.Translator
 {
     internal class ObjectToAstTranslator
     {
+        public const BindingFlags Bindings = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+
         internal ITrlParseResult BuildAst<TObject>(TObject inputObject, string rootLabel)
         {
             ITrlParseResult expression = BuildAstForObject(inputObject);
@@ -78,9 +80,9 @@ namespace Trl.Serialization.Translator
         {
             // Assume we are creating a non ac term in the default case
             var type = inputObject.GetType();
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+            var properties = type.GetProperties(Bindings)
                                 .Where(p => p.CanRead).OrderBy(p => p.Name);
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+            var fields = type.GetFields(Bindings)
                                 .OrderBy(p => p.Name);
 
             // Build arguments first

@@ -28,10 +28,17 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public Symbol[] Arguments { get; }
 
-        public Term(Symbol name, Symbol[] arguments)
+        /// <summary>
+        /// Represents metadata about a term, for example the class member mappings.
+        /// Affects equality, metadata must also be the same for terms to be equal.
+        /// </summary>
+        public Dictionary<TermMetaData, Symbol> MetaData { get; }
+
+        public Term(Symbol name, Symbol[] arguments, Dictionary<TermMetaData, Symbol> metaData = null)
         {
             Name = name;
             Arguments = arguments;
+            MetaData = metaData;
 
             // Arguments must have identifiers
             if (arguments != null)

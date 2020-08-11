@@ -14,12 +14,16 @@ namespace Trl.TermDataRepresentation.Database
             }
 
             // Scenario 2: At least one of the terms have not been mapped
+
+            // Check names
             var stringNamesMatch = x.Name.AssociatedStringValue == y.Name.AssociatedStringValue
                                 && x.Name.Type == y.Name.Type;
             if (!stringNamesMatch)
             {
                 return false;
             }
+
+            // Check arguments
             var argumentLengthsMatch = 
                 x.Arguments switch
                 {
@@ -39,7 +43,38 @@ namespace Trl.TermDataRepresentation.Database
                     argsMatch = x.Arguments[i].TermIdentifier.Value == y.Arguments[i].TermIdentifier.Value;
                 }
             }
-            return argsMatch;
+            if (!argsMatch)
+            {
+                return false;
+            }
+
+            // Check metadata
+            var memberMappingsLengthMatch =
+                (x.MetaData, y.MetaData) switch
+                {
+                    (null, null) => true,
+                    (null, _) => false,
+                    (_, null) => false,
+                    (_, _) => x.MetaData.Count == y.MetaData.Count
+                };
+            if (!memberMappingsLengthMatch)
+            {
+                return false;
+            }
+            if (x.MetaData != null)
+            {
+                foreach (var pair in x.MetaData)
+                {
+                    TermMetaData name = pair.Key;
+                    if (!y.MetaData.TryGetValue(name, out Symbol yValue)
+                        || pair.Value.TermIdentifier.Value != yValue.TermIdentifier.Value)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         public int GetHashCode(Term x)
@@ -54,6 +89,18 @@ namespace Trl.TermDataRepresentation.Database
                 {
                     hash.Add(x.Arguments[i].TermIdentifier.Value);
                 }
+            }
+            if (x.MetaData != null)
+            {
+                int v = 0;
+                foreach (var pair in x.MetaData)
+                {
+                    HashCode nestedCode = new HashCode();
+                    nestedCode.Add(pair.Key);
+                    nestedCode.Add(pair.Value.TermIdentifier.Value);
+                    v ^= nestedCode.ToHashCode();
+                }
+                hash.Add(v);
             }
             return hash.ToHashCode();
         }

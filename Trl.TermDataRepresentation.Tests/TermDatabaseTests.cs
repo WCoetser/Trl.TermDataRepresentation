@@ -141,18 +141,23 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.Equal(testIdentifier1, testIdentifier2);
         }
 
-        [Fact]
-        public void ShouldIgnoreFieldMappingsForTermEquality()
+        
+        [InlineData("vertex<x,y,z>(1,2,3);", "vertex<c1,c2,c3>(1,2,3);", false)]
+        [InlineData("vertex<x,y,z>(1,2,3);", "vertex<x,y,z>(1,2,3);", true)]
+        [InlineData("vertex<x,y,z>(1,2,3);", "vertex(1,2,3);", false)]
+        [InlineData("vertex(1,2,3);", "vertex<x,y,z>(1,2,3);", false)]
+        [Theory]
+        public void ShouldNotIgnoreFieldMappingsForEquality(string lhsTerm, string rhsTerm, bool expectedEquals)
         {
-            var lhs = ParseStatement("point(vertex(1,2,3));");
-            var rhs = ParseStatement("point<coords>(vertex<x,y,z>(1,2,3));");
+            var lhs = ParseStatement(lhsTerm);
+            var rhs = ParseStatement(rhsTerm);
 
             // Act
             var testIdentifier1 = _termDatabase.SaveTerm(lhs.Term).TermIdentifier.Value;
             var testIdentifier2 = _termDatabase.SaveTerm(rhs.Term).TermIdentifier.Value;
 
             // Assert
-            Assert.Equal(testIdentifier1, testIdentifier2);
+            Assert.Equal(expectedEquals, testIdentifier1 == testIdentifier2);
         }
 
         [Fact]

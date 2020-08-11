@@ -124,8 +124,33 @@ namespace Trl.TermDataRepresentation.Database
                 SymbolType.Identifier => new Identifier { Name = termName },
                 SymbolType.String => new StringValue { Value = termName },
                 SymbolType.Number => new NumericValue { Value = termName },
-                SymbolType.TermList => new TermList { Terms = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList() },
+                SymbolType.TermList => new TermList 
+                { 
+                    Terms = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList() 
+                },
+                SymbolType.NonAcTerm => new NonAcTerm
+                {
+                    TermName = new Identifier { Name = termName },
+                    Arguments = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList(),
+                    ClassMemberMappings = ReadClassMemberMappings(term.MetaData)
+                },
                 _ => throw new NotImplementedException()
+            };
+        }
+
+        private ClassMemberMappingsList ReadClassMemberMappings(Dictionary<TermMetaData, Symbol> metaData)
+        {
+            if (metaData == null || !metaData.TryGetValue(TermMetaData.ClassMemberMappings, out Symbol mappings))
+            {
+                return null;
+            }
+
+            // List of Identifiers expected
+            var mappingValues = (TermList)ReadTerm(mappings.TermIdentifier.Value);
+
+            return new ClassMemberMappingsList
+            {
+                ClassMembers = mappingValues.Terms.Cast<Identifier>().ToList()
             };
         }
 
@@ -159,7 +184,7 @@ namespace Trl.TermDataRepresentation.Database
             {
                 var arguments = nonAcTerm.Arguments.Select(t => SaveTerm(t)).ToArray();
                 ulong numTermName = _stringMapper.Map(nonAcTerm.TermName.Name);
-                term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments);
+                term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments, GetMetadata(nonAcTerm));
             }
             else
             {
@@ -169,6 +194,26 @@ namespace Trl.TermDataRepresentation.Database
             var termId = _termMapper.Map(term);
             term.Name.TermIdentifier = termId;            
             return term.Name;
+        }
+
+        private Dictionary<TermMetaData, Symbol> GetMetadata(NonAcTerm nonAcTerm)
+        {
+            Dictionary<TermMetaData, Symbol> metadata = new Dictionary<TermMetaData, Symbol>();
+
+            var identifiers = nonAcTerm.ClassMemberMappings?.ClassMembers?.Cast<ITrlTerm>().ToList();
+            if (identifiers == null || !identifiers.Any())
+            {
+                return metadata;
+            }
+
+            // Store field mappings as a list
+            TermList classMappings = new TermList
+            {
+                Terms = identifiers
+            };
+            metadata.Add(TermMetaData.ClassMemberMappings, SaveTerm(classMappings));
+
+            return metadata;
         }
     }
 }
