@@ -12,6 +12,7 @@
         Term,
         Label,
         ClassMemberMapping,
-        NonACTerm
+        NonACTerm,
+        RewriteRule
     }
 }

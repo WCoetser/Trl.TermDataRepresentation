@@ -178,5 +178,22 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.False(result.Succeed);
             Assert.Single(result.Errors.Select(err => err == Errors.Syntax));
         }
+
+        [InlineData("abc", "def")]
+        [InlineData("t1(a)", "t1(1)")]
+        [InlineData("v<x,y>(1,2)", "v<x,y>(3,5)")]
+        [InlineData("123", "456")]
+        [InlineData("(\"a\", \"b\")", "(1,2)")]
+        [Theory]
+        public void ShouldParseRewriteRule(string from, string to)
+        {
+            // Act
+            var result = _parser.ParseToAst($"{from} => {to};");
+
+            // Assert
+            Assert.True(result.Succeed);            
+            Assert.True(StringComparer.InvariantCulture.Equals(from, result.Statements.RewriteRules.Single().MatchTerm.ToSourceCode()));
+            Assert.True(StringComparer.InvariantCulture.Equals(to, result.Statements.RewriteRules.Single().SubstituteTerm.ToSourceCode()));
+        }
     }
 }

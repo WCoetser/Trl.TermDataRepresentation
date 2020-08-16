@@ -18,7 +18,7 @@ namespace Trl.TermDataRepresentation.Tests
             _parser = new TrlParser();
         }
 
-        private Statement ParseStatement(string input)
+        private TermStatement ParseStatement(string input)
         {
             var parseResult = _parser.ParseToAst(input);
             if (!parseResult.Succeed)

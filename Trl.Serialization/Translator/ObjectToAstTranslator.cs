@@ -17,7 +17,7 @@ namespace Trl.Serialization.Translator
         {
             ITrlParseResult expression = BuildAstForObject(inputObject);
 
-            return new Statement
+            return new TermStatement
             {
                 Term = (ITrlTerm)expression,
                 Label = new Label

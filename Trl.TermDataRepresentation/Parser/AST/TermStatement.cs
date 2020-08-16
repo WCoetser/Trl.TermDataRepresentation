@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
 namespace Trl.TermDataRepresentation.Parser.AST
 {
-    public class Statement : ITrlParseResult
+    public class TermStatement : ITrlParseResult
     {
         /// <summary>
         /// Labels used to externally identify term.

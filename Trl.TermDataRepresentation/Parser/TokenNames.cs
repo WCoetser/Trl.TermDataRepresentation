@@ -15,6 +15,7 @@
         Dot,
         Whitespace,
         SemiColon,
-        Colon
+        Colon,
+        Arrow
     }
 }

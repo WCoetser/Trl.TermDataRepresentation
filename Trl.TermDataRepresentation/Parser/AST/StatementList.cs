@@ -6,7 +6,9 @@ namespace Trl.TermDataRepresentation.Parser.AST
 {
     public class StatementList : ITrlParseResult
     {
-        public List<Statement> Statements { get; set; }
+        public List<TermStatement> Statements { get; set; }
+
+        public List<RewriteRule> RewriteRules { get; set; }
 
         public void WriteToStream(StreamWriter outputStream)
         {

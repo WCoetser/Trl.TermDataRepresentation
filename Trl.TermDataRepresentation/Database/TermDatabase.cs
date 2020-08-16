@@ -39,7 +39,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Saves a statement.
         /// </summary>
-        public void SaveStatement(Statement statement)
+        public void SaveStatement(TermStatement statement)
         {
             ulong termIdentifier = SaveTerm(statement.Term).TermIdentifier.Value;
             var term = _termMapper.ReverseMap(termIdentifier);
@@ -86,7 +86,7 @@ namespace Trl.TermDataRepresentation.Database
 
             var returnStatements = new StatementList
             {
-                Statements = new List<Statement>()
+                Statements = new List<TermStatement>()
             };
 
             foreach (var termId in associatedTermIds)
@@ -103,7 +103,7 @@ namespace Trl.TermDataRepresentation.Database
                         Name = _stringMapper.ReverseMap(labelId)
                     });
                 }
-                returnStatements.Statements.Add(new Statement
+                returnStatements.Statements.Add(new TermStatement
                 {
                     Label = returnLabel,
                     Term = ReadTerm(termId)
