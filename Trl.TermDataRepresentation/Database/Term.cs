@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Trl.TermDataRepresentation.Database
 {
@@ -51,6 +52,14 @@ namespace Trl.TermDataRepresentation.Database
                     }
                 }
             }
+        }
+
+        internal Term CreateCopy(Symbol[] newArguments)
+        {
+            var newSymbol = new Symbol(Name.AssociatedStringValue, Name.Type);
+            var newMetaData = MetaData != null ? new Dictionary<TermMetaData, Symbol>(MetaData) : null;
+            var copy = new Term(newSymbol, newArguments, newMetaData);
+            return copy;
         }
     }
 }

@@ -29,11 +29,24 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         private readonly Dictionary<ulong, HashSet<ulong>> _labelToTermMapper;
 
+        private readonly Frame _currentFrame;
+
         public TermDatabase()
         {
             _stringMapper = new StringMapper();
             _termMapper = new EqualityComparerMapper<Term>(new IntegerMapperTermEqualityComparer());
             _labelToTermMapper = new Dictionary<ulong, HashSet<ulong>>();
+            _currentFrame = new Frame(this);
+        }
+
+        /// <summary>
+        /// Rewriteed collection of root terms.
+        /// </summary>
+        /// <param name="maxIterations">Maximum number of times to apply rewrite rules. This helps prefent non-terminatio
+        /// in certain scenarios.</param>
+        public void ExecuteRewriteRules(int maxIterations = 100000)
+        {
+            _currentFrame.Rewrite(maxIterations);
         }
 
         /// <summary>
@@ -54,6 +67,7 @@ namespace Trl.TermDataRepresentation.Database
                 term.Labels.Add(labelId);
                 referencedTerms.Add(termIdentifier);
             }
+            _currentFrame.RootTerms.Add(termIdentifier);
         }
 
         /// <summary>
@@ -66,6 +80,20 @@ namespace Trl.TermDataRepresentation.Database
             {
                 SaveStatement(statement);
             }
+
+            foreach (var r in statementList.RewriteRules)
+            {
+                SaveRewriteRule(r);
+            }
+        }
+
+        public void SaveRewriteRule(RewriteRule rule)
+        {
+            _currentFrame.Substitutions.Add(new Substitution
+            {
+                MatchTermIdentifier = SaveTerm(rule.MatchTerm).TermIdentifier.Value,
+                SubstituteTermIdentifier = SaveTerm(rule.SubstituteTerm).TermIdentifier.Value
+            });
         }
 
         /// <summary>
@@ -89,7 +117,7 @@ namespace Trl.TermDataRepresentation.Database
                 Statements = new List<TermStatement>()
             };
 
-            foreach (var termId in associatedTermIds)
+            foreach (var termId in associatedTermIds.Intersect(_currentFrame.RootTerms))
             {
                 var returnLabel = new Label
                 {
@@ -111,6 +139,42 @@ namespace Trl.TermDataRepresentation.Database
             }
             return returnStatements;
         }
+
+        /// <summary>
+        /// Measure the database.
+        /// </summary>
+        public DatabaseMetrics GetDatabaseMetrics() 
+        {
+            return new DatabaseMetrics
+            {
+                RewriteRuleCount = Convert.ToInt32(_currentFrame.Substitutions.Count),
+                StringCount = _stringMapper.MappedObjectsCount,
+                TermCount = _termMapper.MappedObjectsCount,
+                LabelCount = _labelToTermMapper.Count
+            };
+        }
+
+        /// <summary>
+        /// Make <paramref name="toTermId"/> term retrievable with labels for <paramref name="fromTermId"/> term.
+        /// </summary>
+        internal void CopyLabels(ulong fromTermId, ulong toTermId)
+        {
+            var sourceTerm = _termMapper.ReverseMap(fromTermId);
+            var destinationTerm = _termMapper.ReverseMap(toTermId);
+            foreach (var l in sourceTerm.Labels)
+            {
+                destinationTerm.Labels.Add(l);
+                _labelToTermMapper[l].Add(toTermId);
+            }
+        }
+        
+        /// <summary>
+        /// Gets a term in it's database form from the mapped integer value.
+        /// </summary>
+        /// <param name="termIdentifier">Identifier for the term.</param>
+        /// <returns>The term.</returns>
+        public Term GetInternalTermById(ulong termIdentifier)
+            => _termMapper.ReverseMap(termIdentifier);
 
         /// <summary>
         /// Reconstructs a term from an identifier, producing an AST representation of the term.
@@ -156,6 +220,7 @@ namespace Trl.TermDataRepresentation.Database
 
         /// <summary>
         /// Saves an AST term and returns a symbol uniquely identifying it.
+        /// Does no add term to set of root terms for rewriting.
         /// </summary>
         public Symbol SaveTerm(ITrlTerm parseResult)
         {
@@ -190,10 +255,19 @@ namespace Trl.TermDataRepresentation.Database
             {
                 throw new NotImplementedException();
             }
-
-            var termId = _termMapper.Map(term);
-            term.Name.TermIdentifier = termId;            
+            SaveTerm(term);
             return term.Name;
+        }
+
+        /// <summary>
+        /// Loads a new term and assigns an ID.
+        /// </summary>
+        /// <param name="term">Term to save</param>
+        /// <returns>New term identifier</returns>
+        public void SaveTerm(Term term)
+        {
+            var termId = _termMapper.Map(term);
+            term.Name.TermIdentifier = termId;  
         }
 
         private Dictionary<TermMetaData, Symbol> GetMetadata(NonAcTerm nonAcTerm)

@@ -28,7 +28,7 @@ namespace Trl.TermDataRepresentation.Parser
         {
             // NB: This list of token definitions is prioritized
             _tokenizer = _pegFacade.Tokenizer(new[] {
-                _pegFacade.Token(TokenNames.String, new Regex("\"(?:[^\"]|(?:\\\"))*\"", RegexOptions.Compiled)), // \" is used to escape quote characters
+                _pegFacade.Token(TokenNames.String, new Regex(@"""(?:(?:\\\"")|[^\""])*?\""", RegexOptions.Compiled)), // \" is used to escape quote characters
                 _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Whitespace, new Regex(@"\s+", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled)),

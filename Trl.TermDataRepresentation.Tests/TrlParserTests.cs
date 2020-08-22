@@ -183,7 +183,7 @@ namespace Trl.TermDataRepresentation.Tests
         [InlineData("t1(a)", "t1(1)")]
         [InlineData("v<x,y>(1,2)", "v<x,y>(3,5)")]
         [InlineData("123", "456")]
-        [InlineData("(\"a\", \"b\")", "(1,2)")]
+        [InlineData("(\"a\",\"b\")", "(1,2)")]
         [Theory]
         public void ShouldParseRewriteRule(string from, string to)
         {

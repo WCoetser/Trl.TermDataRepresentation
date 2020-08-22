@@ -163,6 +163,7 @@ namespace Trl.TermDataRepresentation.Tests
         [Fact]
         public void ShouldMapDifferentIdentifiersToTermAndIdWithSameName()
         {
+            // Arrange
             var lhs = ParseStatement("a;");
             var rhs = ParseStatement("a();");
 
@@ -172,6 +173,27 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.NotEqual(testIdentifier1, testIdentifier2);
+        }
+
+        [Fact]
+        public void ShouldLoadAndApplyRewriteRules()
+        {
+            // Arrange
+            var parseResult = _parser.ParseToAst("root: a(1); a(1) => a(2); a(2) => a(3);");
+            if (!parseResult.Succeed)
+            {
+                throw new Exception(parseResult.Errors.First());
+            }
+
+            // Act
+            _termDatabase.SaveStatements(parseResult.Statements);
+            _termDatabase.ExecuteRewriteRules();
+
+            // Assert
+            var s = _termDatabase.ReadStatementsForLabel("root");
+            Assert.NotNull(s);
+            Assert.Single(s.Statements);
+            Assert.True(StringComparer.InvariantCulture.Equals("root: a(3);", s.Statements.Single().ToSourceCode()));
         }
     }
 }
