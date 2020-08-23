@@ -54,6 +54,8 @@ namespace Trl.TermDataRepresentation.Database
             int iterationCount = 0;
             do
             {
+                // TODO: Optimize
+
                 newTermIds.Clear();
                 rewrittenTerms.Clear();
                 foreach (var substitution in Substitutions)

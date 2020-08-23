@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Trl.TermDataRepresentation.Database;
@@ -10,21 +11,24 @@ namespace Trl.Serialization.Translator
     internal class StringToObjectTranslator
     {
         private readonly TrlParser _parser;
+        private readonly Dictionary<(ulong, string), object> _objectCache;
 
         internal StringToObjectTranslator()
         {
             _parser = new TrlParser();
+            _objectCache = new Dictionary<(ulong, string), object>(EqualityComparer<ValueTuple<ulong, string>>.Default);
         }
 
-        internal TObject BuildObject<TObject>(string inputString, string rootLabel)
+        internal TObject BuildObject<TObject>(string inputString, string rootLabel, int maxRewriteIterations = 100000)
         {
             var database = new TermDatabase();
-            var ast = _parser.ParseToAst(inputString);
-            if (!ast.Succeed)
+            var result = _parser.ParseToAst(inputString);
+            if (!result.Succeed)
             {
-                throw new Exception("Syntax error.");
+                throw new Exception(string.Join(Environment.NewLine, result.Errors));
             }
-            database.SaveStatements(ast.Statements);
+            database.SaveStatements(result.Statements);
+            database.ExecuteRewriteRules(maxRewriteIterations);
             var statementList = database.ReadStatementsForLabel(rootLabel);
             if (statementList == default || statementList.Statements.Count == 0)
             {

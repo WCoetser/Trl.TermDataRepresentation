@@ -19,10 +19,10 @@ namespace Trl.Serialization
             _stringToObjectTranslator = new StringToObjectTranslator();
         }
 
-        public TObject Deserialize<TObject>(StreamReader input, string rootLabel = "root")
+        public TObject Deserialize<TObject>(StreamReader input, string rootLabel = "root", int maxRewriteIterations = 100000)
         {
             var inputStr = input.ReadToEnd();
-            return _stringToObjectTranslator.BuildObject<TObject>(inputStr, rootLabel);
+            return _stringToObjectTranslator.BuildObject<TObject>(inputStr, rootLabel, maxRewriteIterations);
         }
 
         public void Serialize<TObject>(TObject inputObject, StreamWriter outputStream, string rootLabel = "root")

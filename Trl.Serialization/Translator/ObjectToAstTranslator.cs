@@ -111,7 +111,7 @@ namespace Trl.Serialization.Translator
             {
                 TermName = new Identifier
                 {
-                    Name = type.FullName
+                    Name = type.Name
                 },
                 ClassMemberMappings = new ClassMemberMappingsList
                 {

@@ -14,7 +14,7 @@ namespace Trl.Serialization
             _stringStreamSerializer = new TextStreamSerializer(_encoding);
         }
 
-        public TObject Deserialize<TObject>(string input, string rootLabel = "root")
+        public TObject Deserialize<TObject>(string input, string rootLabel = "root", int maxRewriteIterations = 100000)
         {
             using var memIn = new MemoryStream();
             using var streamWriter = new StreamWriter(memIn, _encoding);
@@ -22,7 +22,7 @@ namespace Trl.Serialization
             streamWriter.Flush();
             memIn.Seek(0, SeekOrigin.Begin);
             using var streamReader = new StreamReader(memIn, _encoding);
-            return _stringStreamSerializer.Deserialize<TObject>(streamReader, rootLabel);
+            return _stringStreamSerializer.Deserialize<TObject>(streamReader, rootLabel, maxRewriteIterations);
         }
 
         public string Serialize<TObject>(TObject inputObject, string rootLabel = "root")
