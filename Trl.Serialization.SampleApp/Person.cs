@@ -1,4 +1,4 @@
-﻿namespace Trs.Serialization.SampleApp
+﻿namespace Trl.Serialization.SampleApp
 {
     public class Person
     {

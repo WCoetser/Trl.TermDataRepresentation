@@ -51,6 +51,10 @@ Output:
 root: (Person<Born,Name>(-470,"Socrates"),Person<Born,Name>(-423,"Plato"),Person<Born,Name>(-384,"Aristotle"));
 ```
 
+# Installation via Nuget
+
+See [https://www.nuget.org/packages/Trl.Serialization/](https://www.nuget.org/packages/Trl.Serialization/) for nuget package.
+
 # Unit Test Code Coverage
 
 Unit tests can be run using the `.\test.ps1` script. This will generate a code coverage report in the `.\UnitTestCoverageReport` folder using [Coverlet](https://github.com/tonerdo/coverlethttps://github.com/tonerdo/coverlet) and [ReportGenerator](https://github.com/danielpalme/ReportGenerator).

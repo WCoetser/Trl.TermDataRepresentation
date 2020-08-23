@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Trl.Serialization;
 
-namespace Trs.Serialization.SampleApp
+namespace Trl.Serialization.SampleApp
 {
     class Program
     {
