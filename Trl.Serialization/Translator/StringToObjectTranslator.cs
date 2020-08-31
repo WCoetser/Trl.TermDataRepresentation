@@ -27,9 +27,9 @@ namespace Trl.Serialization.Translator
             {
                 throw new Exception(string.Join(Environment.NewLine, result.Errors));
             }
-            database.SaveStatements(result.Statements);
+            database.Writer.StoreStatements(result.Statements);
             database.ExecuteRewriteRules(maxRewriteIterations);
-            var statementList = database.ReadStatementsForLabel(rootLabel);
+            var statementList = database.Reader.ReadStatementsForLabel(rootLabel);
             if (statementList == default || statementList.Statements.Count == 0)
             {
                 return default;

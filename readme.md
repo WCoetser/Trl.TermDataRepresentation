@@ -10,9 +10,9 @@ This is exposed as a serialiser and deserialiser to make it useful for most appl
 
 Input:
 ```C#
-person1 => person<Name,Born>("Socrates", -470);
-person2 => person<Name,Born>("Plato", -423);
-person3 => person<Name,Born>("Aristotle", -384);
+person1 => Person<Name,Born>("Socrates", -470);
+person2 => Person<Name,Born>("Plato", -423);
+person3 => Person<Name,Born>("Aristotle", -384);
 
 root: (person1, person2, person3);
 ```

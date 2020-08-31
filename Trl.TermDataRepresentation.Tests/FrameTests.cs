@@ -24,7 +24,7 @@ namespace Trl.TermDataRepresentation.Tests
             {
                 throw new Exception(parseResult.Errors.First());
             }
-            _termDatabase.SaveStatements(parseResult.Statements);
+            _termDatabase.Writer.StoreStatements(parseResult.Statements);
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: c;", result.ToSourceCode()));
         }
         
@@ -51,7 +51,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: \"c\";", result.ToSourceCode()));
         }
 
@@ -65,7 +65,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: 1.11;", result.ToSourceCode()));
         }
 
@@ -79,7 +79,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: (3,4);", result.ToSourceCode()));
         }
         
@@ -93,7 +93,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t(c());", result.ToSourceCode()));
         }
 
@@ -107,7 +107,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: (c(),c());", result.ToSourceCode()));
         }
 
@@ -122,7 +122,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: s((a,b));", result.ToSourceCode()));
         }
 
@@ -136,7 +136,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t<c,d>(1,2);", result.ToSourceCode()));
         }
 
@@ -156,7 +156,7 @@ namespace Trl.TermDataRepresentation.Tests
             }
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t<c,d>(1,2);", result.ToSourceCode()));
             var metricsAssert = _termDatabase.GetDatabaseMetrics();
             Assert.Equal(metrics.LabelCount, metricsAssert.LabelCount);
@@ -175,7 +175,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t((a,b));", result.ToSourceCode()));
         }
 
@@ -189,7 +189,7 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.ExecuteRewriteRules(4);
 
             // Assert
-            var result = _termDatabase.ReadStatementsForLabel("root");
+            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t(t(t(t(x))));", result.ToSourceCode()));
         }
     }

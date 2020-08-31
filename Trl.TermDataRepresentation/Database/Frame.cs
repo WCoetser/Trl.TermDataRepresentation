@@ -15,17 +15,14 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Root terms to be considered for rewriting.
         /// </summary>
-        public HashSet<ulong> RootTerms { get; }
+        internal HashSet<ulong> RootTerms { get; }
       
-        /// <summary>
-        /// The integer identifiers in the other members refers to this collection.
-        /// </summary>
-        private readonly TermDatabase _termDatabase;
-
         /// <summary>
         /// Represents the rewrite rules.
         /// </summary>
-        public HashSet<Substitution> Substitutions { get; }
+        internal HashSet<Substitution> Substitutions { get; }
+
+        private readonly TermDatabase _termDatabase;
 
         /// <summary>
         /// Creates a frame.
@@ -35,9 +32,9 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="substitutions">Term substitutions.</param>
         public Frame(TermDatabase termDatabase)
         {
-            _termDatabase = termDatabase;
             RootTerms = new HashSet<ulong>();
             Substitutions = new HashSet<Substitution>(new SubstitutionEqualityComparer());
+            _termDatabase = termDatabase;
         }
 
         /// <summary>
@@ -68,7 +65,7 @@ namespace Trl.TermDataRepresentation.Database
                             // In this case rewriting took place and the root terms must be updated
                             newTermIds.Add(newId);
                             rewrittenTerms.Add(termIdentifier);
-                            CopyRootTermMetadata(termIdentifier, newId);
+                            _termDatabase.Writer.CopyLabels(termIdentifier, newId);
                         }
                     }
                 }
@@ -79,12 +76,6 @@ namespace Trl.TermDataRepresentation.Database
                 iterationCount++;
             }
             while (newTermIds.Any() && iterationCount < iterationLimit);
-        }
-
-        private void CopyRootTermMetadata(ulong fromTermId, ulong toTermId)
-        {
-            // Assign external labels for selection
-            _termDatabase.CopyLabels(fromTermId, toTermId);
         }
 
         /// <summary>
@@ -101,7 +92,7 @@ namespace Trl.TermDataRepresentation.Database
                 return replacementTerm;
             }
 
-            var term = _termDatabase.GetInternalTermById(termIdentifier);
+            var term = _termDatabase.Reader.GetInternalTermById(termIdentifier);
 
             // Arguments
             if (term.Arguments != null)
@@ -120,14 +111,14 @@ namespace Trl.TermDataRepresentation.Database
                     else
                     {
                         // Changes made, get new symbol for new argument
-                        newArguments[i] = _termDatabase.GetInternalTermById(newId).Name;
+                        newArguments[i] = _termDatabase.Reader.GetInternalTermById(newId).Name;
                         foundMatch = true;
                     }
                 }
                 if (foundMatch)
                 {
                     var newTerm = term.CreateCopy(newArguments);
-                    _termDatabase.SaveTerm(newTerm);
+                    _termDatabase.Writer.StoreTermAndAssignId(newTerm);
                     return newTerm.Name.TermIdentifier.Value;
                 }
             }

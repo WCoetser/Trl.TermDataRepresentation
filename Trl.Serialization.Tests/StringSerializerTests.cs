@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TestObjects;
 using Trl.Serialization;
@@ -221,7 +222,7 @@ namespace Trl.Serializer.Tests
             var output = _serializer.Serialize(input);
 
             // Assert
-            Assert.Equal("root: TestObjects.PointPropertyTest<StringVal,X,Y>(\"test\",100,150);", output);
+            Assert.Equal("root: PointPropertyTest<StringVal,X,Y>(\"test\",100,150);", output);
         }
 
         [Fact]
@@ -234,7 +235,7 @@ namespace Trl.Serializer.Tests
             var output = _serializer.Serialize(input);
 
             // Assert
-            Assert.Equal("root: TestObjects.PointFieldTest<StringVal,X,Y>(\"test\",100,150);", output);
+            Assert.Equal("root: PointFieldTest<StringVal,X,Y>(\"test\",100,150);", output);
         }
 
         [Fact]
@@ -260,7 +261,7 @@ namespace Trl.Serializer.Tests
             var output = _serializer.Serialize(contact);
 
             // Assert
-            Assert.Equal("root: TestObjects.ContactInfo<Address,Email,Name>(TestObjects.Address<Country,Line1,PostalCode,State>(\"CountryName\",\"Line1\",1234,\"State\"),\"abc@def.com\",\"Test Name\");", output);
+            Assert.True(StringComparer.InvariantCulture.Equals("root: ContactInfo<Address,Email,Name>(Address<Country,Line1,PostalCode,State>(\"CountryName\",\"Line1\",1234,\"State\"),\"abc@def.com\",\"Test Name\");", output));
         }
 
         [Fact]

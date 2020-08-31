@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using Trl.TermDataRepresentation.Database;
 using Trl.TermDataRepresentation.Parser;
 using Trl.TermDataRepresentation.Parser.AST;
 
@@ -15,11 +16,14 @@ namespace Trl.Serialization.Translator
 
         internal ITrlParseResult BuildAst<TObject>(TObject inputObject, string rootLabel)
         {
-            ITrlParseResult expression = BuildAstForObject(inputObject);
+            var termDatabase = new TermDatabase();
 
-            return new TermStatement
+            Symbol rootTerm = BuildAstForObject(inputObject, termDatabase);
+
+            // Dump root
+            var root = new TermStatement
             {
-                Term = (ITrlTerm)expression,
+                Term = termDatabase.Reader.ReadTerm(rootTerm.TermIdentifier.Value),
                 Label = new Label
                 {
                     Identifiers = new List<Identifier>
@@ -31,52 +35,52 @@ namespace Trl.Serialization.Translator
                     }
                 }
             };
+
+            return new StatementList
+            {
+                Statements = new List<TermStatement> { root },
+                RewriteRules = termDatabase.Reader.ReadAllRewriteRules()
+            };
         }
 
-        private ITrlTerm BuildAstForObject(object inputObject)
+        /// <summary>
+        /// Loads the object into the database, returns the ID.
+        /// </summary>
+        /// <param name="inputObject">Object to load</param>
+        /// <param name="termDatabase">Database to load it into.</param>
+        /// <returns>Unique integer mapped ID of term.</returns>
+        private Symbol BuildAstForObject(object inputObject, TermDatabase termDatabase)
         {
             if (inputObject == null)
             {
-                return new Identifier
-                {
-                    Name = "null"
-                };
+                return termDatabase.Writer.StoreAtom("null", SymbolType.Identifier);
             }
             else if (inputObject is string)
             {
-                return new StringValue
-                {
-                    Value = Convert.ToString(inputObject)
-                };
+                return termDatabase.Writer.StoreAtom(Convert.ToString(inputObject), SymbolType.String);
             }
             // NB: IEnumerable must be after string because string is IEnumerable
             else if (inputObject is IEnumerable)
             {
-                var list = new TermList()
-                {
-                    Terms = new List<ITrlTerm>()
-                };
+                var listMembers = new List<Symbol>();
                 var inputEnumerable = (IEnumerable)inputObject;
                 foreach (var item in inputEnumerable)
                 {
-                    list.Terms.Add((ITrlTerm)BuildAstForObject(item));
+                    listMembers.Add(BuildAstForObject(item, termDatabase));
                 }
-                return list;
+                return termDatabase.Writer.StoreTermList(listMembers.ToArray());
             }
             else if (IsNumeric(inputObject))
             {
-                return new NumericValue
-                {
-                    Value = Convert.ToString(inputObject)
-                };
+                return termDatabase.Writer.StoreAtom(Convert.ToString(inputObject), SymbolType.Number);
             }
             else
             {
-                return GenerateNonAcTerm(inputObject);
+                return GenerateNonAcTerm(inputObject, termDatabase);
             }
         }
 
-        private ITrlTerm GenerateNonAcTerm(object inputObject)
+        private Symbol GenerateNonAcTerm(object inputObject, TermDatabase termDatabase)
         {
             // Assume we are creating a non ac term in the default case
             var type = inputObject.GetType();
@@ -85,16 +89,16 @@ namespace Trl.Serialization.Translator
             var fields = type.GetFields(Bindings)
                                 .OrderBy(p => p.Name);
 
-            // Build arguments first
-            var fieldMappingNames = new List<string>();
-            var arguments = new List<ITrlTerm>();
+            // Build arguments
+            var fieldMappingIdentifiers = new List<Symbol>();
+            var arguments = new List<Symbol>();
             foreach (var prop in properties)
             {
                 var value = prop.GetValue(inputObject);
                 if (value != null)
                 {
-                    fieldMappingNames.Add(prop.Name);
-                    arguments.Add(BuildAstForObject(value));
+                    fieldMappingIdentifiers.Add(termDatabase.Writer.StoreAtom(prop.Name, SymbolType.Identifier));
+                    arguments.Add(BuildAstForObject(value, termDatabase));
                 }
             }
             foreach (var field in fields)
@@ -102,23 +106,16 @@ namespace Trl.Serialization.Translator
                 var value = field.GetValue(inputObject);
                 if (value != null)
                 {
-                    fieldMappingNames.Add(field.Name);
-                    arguments.Add(BuildAstForObject(value));
+                    fieldMappingIdentifiers.Add(termDatabase.Writer.StoreAtom(field.Name, SymbolType.Identifier));
+                    arguments.Add(BuildAstForObject(value, termDatabase));
                 }
             }
 
-            return new NonAcTerm
-            {
-                TermName = new Identifier
-                {
-                    Name = type.Name
-                },
-                ClassMemberMappings = new ClassMemberMappingsList
-                {
-                    ClassMembers = fieldMappingNames.Select(name => new Identifier { Name = name }).ToList(),
-                },
-                Arguments = arguments
-            };
+            Dictionary<TermMetaData, Symbol> metadata = new Dictionary<TermMetaData, Symbol>();            
+            var fieldList = termDatabase.Writer.StoreTermList(fieldMappingIdentifiers.ToArray());
+            metadata.Add(TermMetaData.ClassMemberMappings, fieldList);
+
+            return termDatabase.Writer.StoreNonAcTerm(type.Name, arguments.ToArray(), metadata);
         }
 
         private static bool IsNumeric(object inputObject)
