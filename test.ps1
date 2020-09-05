@@ -6,10 +6,6 @@ if (test-path .\Trl.TermDataRepresentation.Tests\TestResults) {
     Remove-Item -r -force .\Trl.TermDataRepresentation.Tests\TestResults
 }
 
-if (test-path .\Trl.Serialization.Tests\TestResults) {
-    Remove-Item -r -force .\Trl.Serialization.Tests\TestResults
-}
-
 if (test-path .\UnitTestCoverageReport) {
     Remove-Item -r -force .\UnitTestCoverageReport
 }
