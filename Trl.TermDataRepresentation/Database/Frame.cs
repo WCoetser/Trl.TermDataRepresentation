@@ -7,7 +7,7 @@ namespace Trl.TermDataRepresentation.Database
 {
     /// <summary>
     /// Represents current collection of "active" terms.
-    /// The terms are stored in <see cref="TermDatabase"/>
+    /// The terms are stored in <see cref="Database.TermDatabase"/>
     /// Frames exist to facility rewriting.
     /// </summary>
     public class Frame
@@ -22,7 +22,7 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         internal HashSet<Substitution> Substitutions { get; }
 
-        private readonly TermDatabase _termDatabase;
+        internal TermDatabase TermDatabase { get; }
 
         /// <summary>
         /// Creates a frame.
@@ -34,7 +34,7 @@ namespace Trl.TermDataRepresentation.Database
         {
             RootTerms = new HashSet<ulong>();
             Substitutions = new HashSet<Substitution>(new SubstitutionEqualityComparer());
-            _termDatabase = termDatabase;
+            TermDatabase = termDatabase;
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Trl.TermDataRepresentation.Database
                             // In this case rewriting took place and the root terms must be updated
                             newTermIds.Add(newId);
                             rewrittenTerms.Add(termIdentifier);
-                            _termDatabase.Writer.CopyLabels(termIdentifier, newId);
+                            TermDatabase.Writer.CopyLabels(termIdentifier, newId);
                         }
                     }
                 }
@@ -92,7 +92,7 @@ namespace Trl.TermDataRepresentation.Database
                 return replacementTerm;
             }
 
-            var term = _termDatabase.Reader.GetInternalTermById(termIdentifier);
+            var term = TermDatabase.Reader.GetInternalTermById(termIdentifier);
 
             // Arguments
             if (term.Arguments != null)
@@ -111,14 +111,14 @@ namespace Trl.TermDataRepresentation.Database
                     else
                     {
                         // Changes made, get new symbol for new argument
-                        newArguments[i] = _termDatabase.Reader.GetInternalTermById(newId).Name;
+                        newArguments[i] = TermDatabase.Reader.GetInternalTermById(newId).Name;
                         foundMatch = true;
                     }
                 }
                 if (foundMatch)
                 {
                     var newTerm = term.CreateCopy(newArguments);
-                    _termDatabase.Writer.StoreTermAndAssignId(newTerm);
+                    TermDatabase.Writer.StoreTermAndAssignId(newTerm);
                     return newTerm.Name.TermIdentifier.Value;
                 }
             }

@@ -32,6 +32,28 @@ namespace Trl.TermDataRepresentation.Database
         }
 
         /// <summary>
+        /// Gets all current root terms and rewrite rules that makes up the current frame.
+        /// </summary>
+        /// <returns></returns>
+        public StatementList ReadCurrentFrame()
+        {
+            var returnStatements = new StatementList
+            {
+                Statements = new List<TermStatement>(),
+                RewriteRules = new List<RewriteRule>()
+            };
+            foreach (var root in _termDatabase.CurrentFrame.RootTerms)
+            {
+                returnStatements.Statements.Add(ReadRootTermStatement(root));
+            }
+            foreach (var rewriteRule in ReadAllRewriteRules())
+            {
+                returnStatements.RewriteRules.Add(rewriteRule);
+            }
+            return returnStatements;
+        }
+
+        /// <summary>
         /// Gets the statement for the label, if it does not exist returns null.
         /// </summary>
         public StatementList ReadStatementsForLabel(string label)
@@ -53,26 +75,34 @@ namespace Trl.TermDataRepresentation.Database
             };
 
             foreach (var termId in associatedTermIds.Intersect(_termDatabase.CurrentFrame.RootTerms))
-            {
-                var returnLabel = new Label
-                {
-                    Identifiers = new List<Identifier>()
-                };
-                var dbTerm = _termDatabase.TermMapper.ReverseMap(termId);
-                foreach (var labelId in dbTerm.Labels)
-                {
-                    returnLabel.Identifiers.Add(new Identifier
-                    {
-                        Name = _termDatabase.StringMapper.ReverseMap(labelId)
-                    });
-                }
-                returnStatements.Statements.Add(new TermStatement
-                {
-                    Label = returnLabel,
-                    Term = ReadTerm(termId)
-                });
+            {                
+                returnStatements.Statements.Add(ReadRootTermStatement(termId));
             }
             return returnStatements;
+        }
+
+        /// <summary>
+        /// Reads the given root term and assign the label list
+        /// </summary>
+        public TermStatement ReadRootTermStatement(ulong termId)
+        {
+            var returnLabel = new Label
+            {
+                Identifiers = new List<Identifier>()
+            };
+            var dbTerm = _termDatabase.TermMapper.ReverseMap(termId);
+            foreach (var labelId in dbTerm.Labels)
+            {
+                returnLabel.Identifiers.Add(new Identifier
+                {
+                    Name = _termDatabase.StringMapper.ReverseMap(labelId)
+                });
+            }
+            return new TermStatement
+            {
+                Label = returnLabel,
+                Term = ReadTerm(termId)
+            };
         }
 
         /// <summary>
@@ -123,6 +153,6 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="termIdentifier">Identifier for the term.</param>
         /// <returns>The term.</returns>
         public Term GetInternalTermById(ulong termIdentifier)
-            => _termDatabase.TermMapper.ReverseMap(termIdentifier);
+            => _termDatabase.TermMapper.ReverseMap(termIdentifier);                
     }
 }

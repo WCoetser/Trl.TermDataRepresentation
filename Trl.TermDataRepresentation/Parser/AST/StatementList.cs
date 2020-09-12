@@ -10,16 +10,36 @@ namespace Trl.TermDataRepresentation.Parser.AST
 
         public List<RewriteRule> RewriteRules { get; set; }
 
-        public void WriteToStream(StreamWriter outputStream)
+        public void WriteToStream(StreamWriter outputStream, bool prettyPrint = false)
         {
-            if (Statements != null && Statements.Any())
+            if (Statements != null)
             {
-                Statements.First().WriteToStream(outputStream);
-                foreach (var statement in Statements.Skip(1))
+                foreach (var statement in Statements)
                 {
                     statement.WriteToStream(outputStream);
+                    if (prettyPrint)
+                    {
+                        outputStream.WriteLine();
+                    }
                 }
             }
+
+            if (RewriteRules != null)
+            {
+                foreach (var rule in RewriteRules)
+                {
+                    rule.WriteToStream(outputStream);
+                    if (prettyPrint)
+                    {
+                        outputStream.WriteLine();
+                    }
+                }
+            }
+        }
+
+        public void WriteToStream(StreamWriter outputStream)
+        {
+            WriteToStream(outputStream, prettyPrint: false);
         }
     }
 }

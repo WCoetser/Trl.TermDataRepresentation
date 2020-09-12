@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-
-namespace Trl.TermDataRepresentation.Database
-{    
+﻿namespace Trl.TermDataRepresentation.Database
+{
     public class Substitution
     {
         /// <summary>
@@ -13,5 +11,14 @@ namespace Trl.TermDataRepresentation.Database
         /// Terms to be substituted.
         /// </summary>
         public ulong SubstituteTermIdentifier { get; set; }
+
+        public Substitution(Substitution cloneSource = null)
+        {
+            if (cloneSource != null)
+            {
+                MatchTermIdentifier = cloneSource.MatchTermIdentifier;
+                SubstituteTermIdentifier = cloneSource.SubstituteTermIdentifier;
+            }
+        }
     }
 }

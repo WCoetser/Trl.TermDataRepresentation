@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Trl.IntegerMapper;
 using Trl.IntegerMapper.EqualityComparerIntegerMapper;
 using Trl.IntegerMapper.StringIntegerMapper;
+using Trl.TermDataRepresentation.Database.Mutations;
 
 namespace Trl.TermDataRepresentation.Database
 {
@@ -27,7 +28,7 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         internal Dictionary<ulong, HashSet<ulong>> LabelToTermMapper { get; }
 
-        internal Frame CurrentFrame { get; }
+        internal Frame CurrentFrame { get; set; }
 
         private readonly Lazy<TermDatabaseWriter> _writer;
 
@@ -87,6 +88,16 @@ namespace Trl.TermDataRepresentation.Database
             {
                 return _reader.Value;
             }
+        }
+
+        /// <summary>
+        /// Changes the current frame with root terms and substitutions
+        /// based on the given mutation.
+        /// </summary>
+        /// <param name="termDatabaseMutation"></param>
+        public void MutateDatabase(ITermDatabaseMutation termDatabaseMutation)
+        {
+            CurrentFrame = termDatabaseMutation.CreateMutatedFrame(CurrentFrame);
         }
     }
 }

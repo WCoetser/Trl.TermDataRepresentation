@@ -2,7 +2,7 @@
 
 *NB: Under construction*
 
-_Trl.TermDataRepresentation_ aims to create a compact human readable general-purpose data representation system based on the definition of terms. These _terms_ should be familiar to any programmer because they are basically strings, numbers, and function symbols.
+The overall aim of this project is to represent  data in a way that roughly correspond to the definition of a _term_ in formal logic. (see [Wikipedia](https://en.wikipedia.org/wiki/Term_(logic))), and to create a term rewriting system that could be useful in everyday programming. _Terms_ should be familiar to any programmer because they are basically constants, variables, and function symbols.
 
 # Installation via Nuget
 

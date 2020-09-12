@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Trl.TermDataRepresentation.Database;
 using Trl.TermDataRepresentation.Parser;
 using Xunit;
 
@@ -8,36 +7,17 @@ namespace Trl.TermDataRepresentation.Tests
 {
     public class FrameTests
     {
-        private readonly TermDatabase _termDatabase;
-        private readonly TrlParser _parser;
-
-        public FrameTests()
-        {
-            _termDatabase = new TermDatabase();
-            _parser = new TrlParser();
-        }
-
-        public void LoadStatements(string statements)
-        {
-            var parseResult = _parser.ParseToAst(statements);
-            if (!parseResult.Succeed)
-            {
-                throw new Exception(parseResult.Errors.First());
-            }
-            _termDatabase.Writer.StoreStatements(parseResult.Statements);
-        }
-
         [Fact]
         public void ShouldRewriteIdentifier()
         {
             // Arrange
-            LoadStatements("root: a; a => b; b => c;");
+            var termDatabase = TestUtilities.LoadStatements("root: a; a => b; b => c;");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: c;", result.ToSourceCode()));
         }
         
@@ -45,13 +25,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteString()
         {
             // Arrange
-            LoadStatements("root: \"a\"; \"a\" => \"b\"; \"b\" => \"c\";");
+            var termDatabase = TestUtilities.LoadStatements("root: \"a\"; \"a\" => \"b\"; \"b\" => \"c\";");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: \"c\";", result.ToSourceCode()));
         }
 
@@ -59,13 +39,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteNumber()
         {
             // Arrange
-            LoadStatements("root: 1; 1 => 1.1; 1.1 => 1.11;");
+            var termDatabase = TestUtilities.LoadStatements("root: 1; 1 => 1.1; 1.1 => 1.11;");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: 1.11;", result.ToSourceCode()));
         }
 
@@ -73,13 +53,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteList()
         {
             // Arrange
-            LoadStatements("root: (1,2); (1,2) => (2,3); (2,3) => (3,4);");
+            var termDatabase = TestUtilities.LoadStatements("root: (1,2); (1,2) => (2,3); (2,3) => (3,4);");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: (3,4);", result.ToSourceCode()));
         }
         
@@ -87,13 +67,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteTermArgument()
         {
             // Arrange
-            LoadStatements("root: t(a); a => b(); b() => c();");
+            var termDatabase = TestUtilities.LoadStatements("root: t(a); a => b(); b() => c();");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t(c());", result.ToSourceCode()));
         }
 
@@ -101,13 +81,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteListArgument()
         {
             // Arrange
-            LoadStatements("root: (a,b()); a => b(); b() => c();");
+            var termDatabase = TestUtilities.LoadStatements("root: (a,b()); a => b(); b() => c();");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: (c(),c());", result.ToSourceCode()));
         }
 
@@ -116,13 +96,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRewriteRootTerm()
         {
             // Arrange
-            LoadStatements("root: t((a,b)); t((a,b)) => s((a,b));");
+            var termDatabase = TestUtilities.LoadStatements("root: t((a,b)); t((a,b)) => s((a,b));");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: s((a,b));", result.ToSourceCode()));
         }
 
@@ -130,35 +110,42 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldCopyTermClassFieldMappingsOnRewrite()
         {
             // Arrange
-            LoadStatements("root: t<a,b>(1,2); t<a,b>(1,2) => t<b,c>(1,2); t<b,c>(1,2) => t<c,d>(1,2);");
+            var termDatabase = TestUtilities.LoadStatements("root: t<a,b>(1,2); t<a,b>(1,2) => t<b,c>(1,2); t<b,c>(1,2) => t<c,d>(1,2);");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t<c,d>(1,2);", result.ToSourceCode()));
         }
 
         [Fact]
         public void ShouldReUseTermsInRewrite()
-        {   
+        {
             // Arrange
-            LoadStatements("root: t<a,b>(1,2); t<a,b>(1,2) => t<b,c>(1,2); t<b,c>(1,2) => t<c,d>(1,2);");
-            _termDatabase.ExecuteRewriteRules();
-            var metrics = _termDatabase.GetDatabaseMetrics();
+            const string testStatements = "root: t<a,b>(1,2); t<a,b>(1,2) => t<b,c>(1,2); t<b,c>(1,2) => t<c,d>(1,2);";
+            var termDatabase = TestUtilities.LoadStatements(testStatements);
+            termDatabase.ExecuteRewriteRules();
+            var metrics = termDatabase.GetDatabaseMetrics();
 
             // Act
             for (int i = 0; i < 100; i++)
             {
-                LoadStatements("root: t<a,b>(1,2); t<a,b>(1,2) => t<b,c>(1,2); t<b,c>(1,2) => t<c,d>(1,2);");
-                _termDatabase.ExecuteRewriteRules();
+                var parser = new TrlParser();
+                var parseResult = parser.ParseToAst(testStatements);
+                if (!parseResult.Succeed)
+                {
+                    throw new Exception(parseResult.Errors.First());
+                }
+                termDatabase.Writer.StoreStatements(parseResult.Statements);
+                termDatabase.ExecuteRewriteRules();
             }
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t<c,d>(1,2);", result.ToSourceCode()));
-            var metricsAssert = _termDatabase.GetDatabaseMetrics();
+            var metricsAssert = termDatabase.GetDatabaseMetrics();
             Assert.Equal(metrics.LabelCount, metricsAssert.LabelCount);
             Assert.Equal(metrics.RewriteRuleCount, metricsAssert.RewriteRuleCount);
             Assert.Equal(metrics.StringCount, metricsAssert.StringCount);
@@ -169,13 +156,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldReturnSameResultIfNoMatch()
         {
             // Arrange
-            LoadStatements("root: t((a,b)); x => y;");
+            var termDatabase = TestUtilities.LoadStatements("root: t((a,b)); x => y;");
 
             // Act
-            _termDatabase.ExecuteRewriteRules();
+            termDatabase.ExecuteRewriteRules();
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t((a,b));", result.ToSourceCode()));
         }
 
@@ -183,13 +170,13 @@ namespace Trl.TermDataRepresentation.Tests
         public void ShouldRespectIterationLimit()
         {
             // Arrange
-            LoadStatements("root: x; x => t(x);");
+            var termDatabase = TestUtilities.LoadStatements("root: x; x => t(x);");
 
             // Act
-            _termDatabase.ExecuteRewriteRules(4);
+            termDatabase.ExecuteRewriteRules(4);
 
             // Assert
-            var result = _termDatabase.Reader.ReadStatementsForLabel("root");
+            var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t(t(t(t(x))));", result.ToSourceCode()));
         }
     }
