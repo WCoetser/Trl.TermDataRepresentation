@@ -6,12 +6,12 @@
     <!-- BEGIN NUGET METADATA -->
 
     <PackageId>Trl.TermDataRepresentation</PackageId>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Authors>Wikus Coetser</Authors>
     <Company></Company>
     <Title>Term Data Representation</Title>
-    <PackageDescription>NB: Under construction - Trl.TermDataRepresentation aims to create a compact human readable general-purpose data representation system based on the definition of terms. These _terms_ should be familiar to any programmer because they are basically strings, numbers, and function symbols. This is exposed as a serialiser and deserialiser to make it useful for most applications.</PackageDescription>
-    <Description>NB: Under construction - Trl.TermDataRepresentation aims to create a compact human readable general-purpose data representation system based on the definition of terms. These _terms_ should be familiar to any programmer because they are basically strings, numbers, and function symbols. This is exposed as a serialiser and deserialiser to make it useful for most applications.</Description>
+    <PackageDescription>NB: Under construction - The overall aim of this project is to represent  data in a way that roughly correspond to the definition of a _term_ in formal logic, and to create a term rewriting system that could be useful in everyday programming. _Terms_ should be familiar to any programmer because they are basically constants, variables, and function symbols.</PackageDescription>
+    <Description>NB: Under construction - The overall aim of this project is to represent  data in a way that roughly correspond to the definition of a _term_ in formal logic, and to create a term rewriting system that could be useful in everyday programming. _Terms_ should be familiar to any programmer because they are basically constants, variables, and function symbols.</Description>
     <Copyright>Wikus Coetser, 2020, MIT Licence</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!-- TODO: - <PackageReleaseNotes></PackageReleaseNotes>-->
@@ -22,9 +22,9 @@
     <RepositoryBranch>master</RepositoryBranch>
     <!-- TODO: <MinClientVersion></MinClientVersion>-->
     <tags>Terms Data_Representation Serialization Deserialization Serializer Deserializer</tags>
-    <PackageTags>Terms Data_Representation Serialization Deserialization  Serializer Deserializer</PackageTags>
+    <PackageTags>Terms Data_Representation Term_Rewriting</PackageTags>
     <PackageProjectUrl>https://github.com/WCoetser/Trl.TermDataRepresentation</PackageProjectUrl>
-    <PackageReleaseNotes>NB: Under construction - Trl.TermDataRepresentation aims to create a compact human readable general-purpose data representation system based on the definition of terms. These _terms_ should be familiar to any programmer because they are basically strings, numbers, and function symbols. This is exposed as a serialiser and deserialiser to make it useful for most applications.</PackageReleaseNotes>
+    <PackageReleaseNotes>NB: Under construction - The overall aim of this project is to represent  data in a way that roughly correspond to the definition of a _term_ in formal logic, and to create a term rewriting system that could be useful in everyday programming. _Terms_ should be familiar to any programmer because they are basically constants, variables, and function symbols.</PackageReleaseNotes>
 
     <!-- END NUGET METADATA -->
 
