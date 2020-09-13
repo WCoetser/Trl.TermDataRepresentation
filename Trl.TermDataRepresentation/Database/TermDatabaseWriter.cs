@@ -28,23 +28,42 @@ namespace Trl.TermDataRepresentation.Database
         }
 
         /// <summary>
+        /// Assigns a label to a term for easy later retrieval.
+        /// </summary>
+        /// <param name="termIdToLabel">ID of the term recieving the label.</param>
+        /// <param name="labelToAssign">The label to assign.</param>
+        public void LabelTerm(ulong termIdToLabel, string labelToAssign)
+        {
+            ulong labelId = _termDatabase.StringMapper.Map(labelToAssign);
+            var term = _termDatabase.Reader.GetInternalTermById(termIdToLabel);
+            if (!_termDatabase.LabelToTermMapper.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
+            {
+                referencedTerms = new HashSet<ulong>();
+                _termDatabase.LabelToTermMapper.Add(labelId, referencedTerms);
+            }
+            term.Labels.Add(labelId);
+            referencedTerms.Add(term.Name.TermIdentifier.Value);
+        }
+
+        /// <summary>
         /// Saves a statement.
         /// </summary>
         public void StoreStatement(TermStatement statement)
         {
             ulong termIdentifier = StoreTerm(statement.Term).TermIdentifier.Value;
-            var term = _termDatabase.TermMapper.ReverseMap(termIdentifier);
             foreach (var identifier in statement.Label.Identifiers)
             {
-                ulong labelId = _termDatabase.StringMapper.Map(identifier.Name);
-                if (!_termDatabase.LabelToTermMapper.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
-                {
-                    referencedTerms = new HashSet<ulong>();
-                    _termDatabase.LabelToTermMapper.Add(labelId, referencedTerms);
-                }
-                term.Labels.Add(labelId);
-                referencedTerms.Add(termIdentifier);
+                LabelTerm(termIdentifier, identifier.Name);
             }
+            SetAsRootTerm(termIdentifier);
+        }
+
+        /// <summary>
+        /// Adds the term ID to the current frame for the term database,
+        /// making it a root term.
+        /// </summary>
+        public void SetAsRootTerm(ulong termIdentifier)
+        {
             _termDatabase.CurrentFrame.RootTerms.Add(termIdentifier);
         }
 
