@@ -26,7 +26,7 @@ namespace Trl.TermDataRepresentation.Tests
                 throw new Exception(parseResult.Errors.First());
             }
             return _parser.ParseToAst(input).Statements.Statements.Single();
-        }            
+        }
 
         [Fact]
         public void ShouldSaveAndLoadTermByLabel()
@@ -40,7 +40,7 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.Single(statementList.Statements);
-            Assert.Equal("﻿l1,l2: 123;", statementList.ToSourceCode());
+            Assert.Equal("l1,l2: 123;", statementList.ToSourceCode());
         }
 
         [Fact]
@@ -141,7 +141,7 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.Equal(testIdentifier1, testIdentifier2);
         }
 
-        
+
         [InlineData("vertex<x,y,z>(1,2,3);", "vertex<c1,c2,c3>(1,2,3);", false)]
         [InlineData("vertex<x,y,z>(1,2,3);", "vertex<x,y,z>(1,2,3);", true)]
         [InlineData("vertex<x,y,z>(1,2,3);", "vertex(1,2,3);", false)]

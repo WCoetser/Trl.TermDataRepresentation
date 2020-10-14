@@ -12,13 +12,16 @@ namespace Trl.TermDataRepresentation.Parser.AST
 
         public void WriteToStream(StreamWriter outputStream)
         {
-            // There should always be at least one identifier
-            Identifiers.First().WriteToStream(outputStream);
-
-            foreach (var id in Identifiers.Skip(1))
+            if (Identifiers != null && Identifiers.Any())
             {
-                outputStream.Write(",");
-                id.WriteToStream(outputStream);
+                // There should always be at least one identifier
+                Identifiers.First().WriteToStream(outputStream);
+
+                foreach (var id in Identifiers.Skip(1))
+                {
+                    outputStream.Write(",");
+                    id.WriteToStream(outputStream);
+                }
             }
         }
     }

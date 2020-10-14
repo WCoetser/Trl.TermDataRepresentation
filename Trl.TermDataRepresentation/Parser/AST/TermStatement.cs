@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 
 namespace Trl.TermDataRepresentation.Parser.AST
 {
@@ -13,7 +14,7 @@ namespace Trl.TermDataRepresentation.Parser.AST
 
         public void WriteToStream(StreamWriter outputStream)
         {
-            if (Label != null)
+            if (Label != null && Label.Identifiers.Any())
             {
                 Label.WriteToStream(outputStream);
                 outputStream.Write(": ");

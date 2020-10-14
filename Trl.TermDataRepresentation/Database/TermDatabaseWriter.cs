@@ -51,9 +51,12 @@ namespace Trl.TermDataRepresentation.Database
         public void StoreStatement(TermStatement statement)
         {
             ulong termIdentifier = StoreTerm(statement.Term).TermIdentifier.Value;
-            foreach (var identifier in statement.Label.Identifiers)
+            if (statement.Label != null)
             {
-                LabelTerm(termIdentifier, identifier.Name);
+                foreach (var identifier in statement.Label.Identifiers)
+                {
+                    LabelTerm(termIdentifier, identifier.Name);
+                }
             }
             SetAsRootTerm(termIdentifier);
         }
