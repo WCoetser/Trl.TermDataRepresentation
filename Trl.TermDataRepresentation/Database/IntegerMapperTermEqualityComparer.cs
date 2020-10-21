@@ -7,13 +7,16 @@ namespace Trl.TermDataRepresentation.Database
     {
         public bool Equals(Term x, Term y)
         {
-            // Shortcut: If term identifiers are available, use these instead
+            // Scenario 1: If term identifiers are available, use these instead
+            // ---
+
             if (x.Name.TermIdentifier.HasValue && y.Name.TermIdentifier.HasValue)
             {
                 return x.Name.TermIdentifier == y.Name.TermIdentifier;
             }
 
             // Scenario 2: At least one of the terms have not been mapped
+            // ---
 
             // Check names
             var stringNamesMatch = x.Name.AssociatedStringValue == y.Name.AssociatedStringValue

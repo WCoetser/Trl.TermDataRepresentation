@@ -6,6 +6,7 @@
         Number,
         String,
         NonAcTerm,
-        TermList
+        TermList,
+        Variable
     }
 }

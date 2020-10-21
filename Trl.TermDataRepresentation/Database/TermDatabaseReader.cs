@@ -63,7 +63,7 @@ namespace Trl.TermDataRepresentation.Database
                 return null;
             }
 
-            if (!_termDatabase.LabelToTermMapper.TryGetValue(labelInteger.Value, out HashSet<ulong> associatedTermIds)
+            if (!_termDatabase.LabelToTerm.TryGetValue(labelInteger.Value, out HashSet<ulong> associatedTermIds)
                 || !associatedTermIds.Any())
             {
                 return null;
@@ -126,6 +126,10 @@ namespace Trl.TermDataRepresentation.Database
                     TermName = new Identifier { Name = termName },
                     Arguments = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList(),
                     ClassMemberMappings = ReadClassMemberMappings(term.MetaData)
+                },
+                SymbolType.Variable => new Variable
+                {
+                    Name = termName
                 },
                 _ => throw new NotImplementedException()
             };

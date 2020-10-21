@@ -195,5 +195,24 @@ namespace Trl.TermDataRepresentation.Tests
             Assert.Single(s.Statements);
             Assert.True(StringComparer.InvariantCulture.Equals("root: a(3);", s.Statements.Single().ToSourceCode()));
         }
+
+        [Fact]
+        public void ShouldLoadVariable()
+        {
+            // Arrange
+            string input = "root: :xyz;";
+            var parseResult = _parser.ParseToAst(input);
+            if (!parseResult.Succeed)
+            {
+                throw new Exception(parseResult.Errors.First());
+            }
+
+            // Act
+            _termDatabase.Writer.StoreStatements(parseResult.Statements);
+
+            // Assert
+            var output = _termDatabase.Reader.ReadCurrentFrame().ToSourceCode();
+            Assert.True(StringComparer.InvariantCulture.Equals(input, output));
+        }
     }
 }

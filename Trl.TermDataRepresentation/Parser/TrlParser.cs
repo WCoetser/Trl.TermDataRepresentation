@@ -29,6 +29,7 @@ namespace Trl.TermDataRepresentation.Parser
             // NB: This list of token definitions is prioritized
             _tokenizer = _pegFacade.Tokenizer(new[] {
                 _pegFacade.Token(TokenNames.String, new Regex(@"""(?:(?:\\\"")|[^\""])*?\""", RegexOptions.Compiled)), // \" is used to escape quote characters
+                _pegFacade.Token(TokenNames.Variable, new Regex(@"\:[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Whitespace, new Regex(@"\s+", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.SemiColon, new Regex(@";", RegexOptions.Compiled)),
@@ -61,6 +62,9 @@ namespace Trl.TermDataRepresentation.Parser
 
             _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.Number,
                 (matchedTokens, _, pegSpec) => new NumericValue { Value = matchedTokens.GetMatchedString() });
+
+            _pegFacade.DefaultSemanticActions.SetTerminalAction(TokenNames.Variable,
+                (matchedTokens, _, pegSpec) => new Variable { Name = matchedTokens.GetMatchedString() });
 
             _pegFacade.DefaultSemanticActions.SetNonTerminalAction(ParseRuleNames.Statement, (_, subResults, pegSpec) => subResults.First());
 
@@ -214,7 +218,7 @@ namespace Trl.TermDataRepresentation.Parser
             const string grammer = @"
 Start => (Statement? [SemiColon])+;
 Statement => RewriteRule | Label? Term;
-Term => NonACTerm | [Identifier] | [String] | [Number] | TermList;
+Term => NonACTerm | [Variable] | [Identifier] | [String] | [Number] | TermList;
 Label => [Identifier] ([Comma] [Identifier])* [Colon];
 TermList => [OpenRoundBracket] CommaSeperatedTerms [CloseRoundBracket];
 CommaSeperatedTerms => (Term ([Comma] Term)*)?;

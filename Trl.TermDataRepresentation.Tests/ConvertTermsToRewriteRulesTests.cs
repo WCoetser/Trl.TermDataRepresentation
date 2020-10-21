@@ -46,5 +46,11 @@ namespace Trl.TermDataRepresentation.Tests
             var output = database.Reader.ReadCurrentFrame().ToSourceCode();
             Assert.Contains("s(1) => t(1);", output);
         }
+
+        [Fact(Skip = "TODO: First implement unification and rewriting, test with serializer")]
+        public void ShouldNotConvertTermsWithVariables()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

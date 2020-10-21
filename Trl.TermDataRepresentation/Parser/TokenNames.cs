@@ -16,6 +16,7 @@
         Whitespace,
         SemiColon,
         Colon,
-        Arrow
+        Arrow,
+        Variable
     }
 }

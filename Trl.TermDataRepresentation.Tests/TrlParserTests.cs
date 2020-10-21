@@ -191,9 +191,25 @@ namespace Trl.TermDataRepresentation.Tests
             var result = _parser.ParseToAst($"{from} => {to};");
 
             // Assert
-            Assert.True(result.Succeed);            
+            Assert.True(result.Succeed);
             Assert.True(StringComparer.InvariantCulture.Equals(from, result.Statements.RewriteRules.Single().MatchTerm.ToSourceCode()));
             Assert.True(StringComparer.InvariantCulture.Equals(to, result.Statements.RewriteRules.Single().SubstituteTerm.ToSourceCode()));
+        }
+
+        [InlineData(":x")]
+        [InlineData(":x.y.z")]
+        [InlineData("root: :x.y.z")]
+        [Theory]
+        public void ShouldParseVariable(string input)
+        {
+            // Act
+            var strIn = $"{input};";
+            var result = _parser.ParseToAst(strIn);
+
+            // Assert
+            Assert.True(result.Succeed);
+            Assert.IsType<Variable>(result.Statements.Statements.Single().Term);
+            Assert.Equal(strIn, result.Statements.Statements.Single().ToSourceCode());
         }
     }
 }

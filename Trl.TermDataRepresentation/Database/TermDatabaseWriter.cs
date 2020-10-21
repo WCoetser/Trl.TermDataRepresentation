@@ -36,10 +36,10 @@ namespace Trl.TermDataRepresentation.Database
         {
             ulong labelId = _termDatabase.StringMapper.Map(labelToAssign);
             var term = _termDatabase.Reader.GetInternalTermById(termIdToLabel);
-            if (!_termDatabase.LabelToTermMapper.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
+            if (!_termDatabase.LabelToTerm.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
             {
                 referencedTerms = new HashSet<ulong>();
-                _termDatabase.LabelToTermMapper.Add(labelId, referencedTerms);
+                _termDatabase.LabelToTerm.Add(labelId, referencedTerms);
             }
             term.Labels.Add(labelId);
             referencedTerms.Add(term.Name.TermIdentifier.Value);
@@ -108,6 +108,14 @@ namespace Trl.TermDataRepresentation.Database
             return term.Name;
         }
 
+        public Symbol StoreVariable(string name)
+        {
+            ulong varName = _termDatabase.StringMapper.Map(name);
+            var term = new Term(new Symbol(varName, SymbolType.Variable), null);
+            StoreTermAndAssignId(term);
+            return term.Name;
+        }
+
         public Symbol StoreTermList(Symbol[] terms)
         {
             var term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), terms);
@@ -150,6 +158,10 @@ namespace Trl.TermDataRepresentation.Database
             {
                 var arguments = nonAcTerm.Arguments.Select(t => StoreTerm(t)).ToArray();
                 return StoreNonAcTerm(nonAcTerm.TermName.Name, arguments, StoreMetadata(nonAcTerm));
+            }
+            else if (parseResult is Variable var)
+            {
+                return StoreVariable(var.Name);
             }
             else
             {
@@ -197,7 +209,7 @@ namespace Trl.TermDataRepresentation.Database
             foreach (var l in sourceTerm.Labels)
             {
                 destinationTerm.Labels.Add(l);
-                _termDatabase.LabelToTermMapper[l].Add(toTermId);
+                _termDatabase.LabelToTerm[l].Add(toTermId);
             }
         }
     }
