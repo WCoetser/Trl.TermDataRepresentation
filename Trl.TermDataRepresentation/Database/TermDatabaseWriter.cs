@@ -103,7 +103,7 @@ namespace Trl.TermDataRepresentation.Database
             }
 
             ulong numName = _termDatabase.StringMapper.Map(value);
-            var term = new Term(new Symbol(numName, symbolType), null);
+            var term = new Term(new Symbol(numName, symbolType), null, new HashSet<ulong>());
             StoreTermAndAssignId(term);
             return term.Name;
         }
@@ -111,22 +111,36 @@ namespace Trl.TermDataRepresentation.Database
         public Symbol StoreVariable(string name)
         {
             ulong varName = _termDatabase.StringMapper.Map(name);
-            var term = new Term(new Symbol(varName, SymbolType.Variable), null);
+            var variables = new HashSet<ulong>();
+            var term = new Term(new Symbol(varName, SymbolType.Variable), null, variables);
             StoreTermAndAssignId(term);
+            variables.Add(term.Name.TermIdentifier.Value);
             return term.Name;
         }
 
         public Symbol StoreTermList(Symbol[] terms)
         {
-            var term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), terms);
+            var variables = new HashSet<ulong>();
+            foreach (var termSymbol in terms)
+            {
+                var t = _termDatabase.Reader.GetInternalTermById(termSymbol.TermIdentifier.Value);
+                variables.UnionWith(t.Variables);
+            }
+            var term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), terms, variables);
             StoreTermAndAssignId(term);
             return term.Name;
         }
 
         public Symbol StoreNonAcTerm(string termName, Symbol[] arguments, Dictionary<TermMetaData, Symbol> metadata)
         {
+            var variables = new HashSet<ulong>();
+            foreach (var arg in arguments)
+            {
+                var t = _termDatabase.Reader.GetInternalTermById(arg.TermIdentifier.Value);
+                variables.UnionWith(t.Variables);
+            }
             ulong numTermName = _termDatabase.StringMapper.Map(termName);
-            var term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments, metadata);
+            var term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments, variables, metadata);
             StoreTermAndAssignId(term);
             return term.Name;
         }

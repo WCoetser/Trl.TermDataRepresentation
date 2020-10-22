@@ -214,5 +214,37 @@ namespace Trl.TermDataRepresentation.Tests
             var output = _termDatabase.Reader.ReadCurrentFrame().ToSourceCode();
             Assert.True(StringComparer.InvariantCulture.Equals(input, output));
         }
+
+        [InlineData(":x;", new[] { ":x" })]
+        [InlineData("term(:x, :y);", new[] { ":x", ":y" })]
+        [InlineData("(:x, :y);", new[] { ":x", ":y" })]
+        [InlineData("\"abc\";", new string [0])]
+        [InlineData("1;", new string[0])]
+        [InlineData("Pi;", new string[0])]
+        [InlineData("t1(t2(:x), (:y, :z), Pi, 0.0, \"abc\");", new[] { ":x", ":y", ":z" })]
+        [Theory]
+        public void ShouldSetVariablesHashSet(string testInput, string[] expectedVariables)
+        {
+            // Arrange            
+            var parseResult = _parser.ParseToAst(testInput);
+            if (!parseResult.Succeed)
+            {
+                throw new Exception(parseResult.Errors.First());
+            }
+
+            // Act
+            _termDatabase.Writer.StoreStatements(parseResult.Statements);
+
+            // Assert
+            var outputTermId = _termDatabase.Reader.ReadCurrentFrameRootTermIds().First();
+            var term = _termDatabase.Reader.GetInternalTermById(outputTermId);
+            Assert.Equal(expectedVariables.Length, term.Variables.Count);
+            foreach (var v in term.Variables)
+            {
+                var termV = _termDatabase.Reader.ReadTerm(v);
+                var varName = termV.ToSourceCode();
+                Assert.Contains(varName, expectedVariables);
+            }
+        }
     }
 }

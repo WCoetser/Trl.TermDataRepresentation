@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Trl.TermDataRepresentation.Database;
 using Xunit;
 
@@ -27,8 +28,8 @@ namespace Trl.TermDataRepresentation.Tests
             termName2.TermIdentifier = null; // these must be null to simulate an unloaded term
             termArgs1.TermIdentifier = 3;
             termArgs2.TermIdentifier = termArgs1.TermIdentifier;
-            var term1 = new Term(termName1, new[] { termArgs1 });
-            var term2 = new Term(termName2, new[] { termArgs2 });
+            var term1 = new Term(termName1, new[] { termArgs1 }, new HashSet<ulong>());
+            var term2 = new Term(termName2, new[] { termArgs2 }, new HashSet<ulong>());
 
             // Act
             var equals = _comparer.Equals(term1, term2);
@@ -54,8 +55,8 @@ namespace Trl.TermDataRepresentation.Tests
             termName2.TermIdentifier = null; // these must be null to simulate an unloaded term
             termArgs1.TermIdentifier = 3; // cause of inequality is in argument non-equality
             termArgs2.TermIdentifier = 4;
-            var term1 = new Term(termName1, new[] { termArgs1 });
-            var term2 = new Term(termName2, new[] { termArgs2 });
+            var term1 = new Term(termName1, new[] { termArgs1 }, new HashSet<ulong>());
+            var term2 = new Term(termName2, new[] { termArgs2 }, new HashSet<ulong>());
 
             // Act
             var equals = _comparer.Equals(term1, term2);
@@ -79,8 +80,8 @@ namespace Trl.TermDataRepresentation.Tests
             termName2.TermIdentifier = termName1.TermIdentifier; // these must not be null to simulate a loaded term
             termArgs1.TermIdentifier = 3;
             termArgs2.TermIdentifier = termArgs1.TermIdentifier;
-            var term1 = new Term(termName1, new[] { termArgs1 });
-            var term2 = new Term(termName2, new[] { termArgs2 });
+            var term1 = new Term(termName1, new[] { termArgs1 }, new HashSet<ulong>());
+            var term2 = new Term(termName2, new[] { termArgs2 }, new HashSet<ulong>());
 
             // Act
             var equals = _comparer.Equals(term1, term2);
@@ -106,8 +107,8 @@ namespace Trl.TermDataRepresentation.Tests
             termName2.TermIdentifier = 5; // these must not be null to simulate a loaded term
             termArgs1.TermIdentifier = 3;
             termArgs2.TermIdentifier = termArgs1.TermIdentifier;
-            var term1 = new Term(termName1, new[] { termArgs1 });
-            var term2 = new Term(termName2, new[] { termArgs2 });
+            var term1 = new Term(termName1, new[] { termArgs1 }, new HashSet<ulong>());
+            var term2 = new Term(termName2, new[] { termArgs2 }, new HashSet<ulong>());
 
             // Act
             var equals = _comparer.Equals(term1, term2);
@@ -126,8 +127,8 @@ namespace Trl.TermDataRepresentation.Tests
             num1.TermIdentifier = 3;
             var num2 = new Symbol(1, SymbolType.Number);
             num2.TermIdentifier = 3;
-            var term1 = new Term(termName1, new[] { num1 });
-            var term2 = new Term(termName2, new[] { num2 });
+            var term1 = new Term(termName1, new[] { num1 }, new HashSet<ulong>());
+            var term2 = new Term(termName2, new[] { num2 }, new HashSet<ulong>());
 
             // Act
             var equals = _comparer.Equals(term1, term2);
@@ -147,7 +148,7 @@ namespace Trl.TermDataRepresentation.Tests
             // Act & Assert
             Assert.Throws<InvalidOperationException>(() =>
             {
-                var term1 = new Term(termName1, new[] { termArgs1 });
+                var term1 = new Term(termName1, new[] { termArgs1 }, new HashSet<ulong>());
             });            
         }
     }

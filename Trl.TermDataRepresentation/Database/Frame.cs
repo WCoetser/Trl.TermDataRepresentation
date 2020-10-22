@@ -79,9 +79,11 @@ namespace Trl.TermDataRepresentation.Database
         }
 
         /// <summary>
-        /// Note: this method only copies the parts of the term that is affercted by the definition of term
-        /// equality in <see cref="IntegerMapperTermEqualityComparer"/>
+        /// Applies a substitution and returns the ID or the result term.
         /// </summary>
+        /// <param name="termIdentifier">The ID of the term being recursively tested to see if it equals _matchTermIdentifier_.</param>
+        /// <param name="matchTermIdentifier">The term ID representing the substitution rule head</param>
+        /// <param name="replacementTerm">The term ID representing the substitution rule tail (i.e. what is being substituted when _matchTermIdentifier_ is matched.</param>
         /// <returns>The ID of the new term, or if the reconstructed term is the same as the old term, the 
         /// ID of the old term.</returns>
         private ulong CopyAndReplaceForEquality(ulong termIdentifier, ulong matchTermIdentifier, ulong replacementTerm)

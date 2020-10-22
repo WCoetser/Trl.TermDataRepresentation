@@ -35,11 +35,17 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public Dictionary<TermMetaData, Symbol> MetaData { get; }
 
-        public Term(Symbol name, Symbol[] arguments, Dictionary<TermMetaData, Symbol> metaData = null)
+        /// <summary>
+        /// List of variables contained by this term and subterms
+        /// </summary>
+        public HashSet<ulong> Variables { get; }
+
+        public Term(Symbol name, Symbol[] arguments, HashSet<ulong> variables, Dictionary<TermMetaData, Symbol> metaData = null)
         {
             Name = name;
             Arguments = arguments;
             MetaData = metaData;
+            Variables = variables;
 
             // Arguments must have identifiers
             if (arguments != null)
@@ -58,7 +64,8 @@ namespace Trl.TermDataRepresentation.Database
         {
             var newSymbol = new Symbol(Name.AssociatedStringValue, Name.Type);
             var newMetaData = MetaData != null ? new Dictionary<TermMetaData, Symbol>(MetaData) : null;
-            var copy = new Term(newSymbol, newArguments, newMetaData);
+            var variables = new HashSet<ulong>(Variables);
+            var copy = new Term(newSymbol, newArguments, variables, newMetaData);
             return copy;
         }
     }

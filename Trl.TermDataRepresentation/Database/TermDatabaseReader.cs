@@ -157,6 +157,15 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="termIdentifier">Identifier for the term.</param>
         /// <returns>The term.</returns>
         public Term GetInternalTermById(ulong termIdentifier)
-            => _termDatabase.TermMapper.ReverseMap(termIdentifier);                
+            => _termDatabase.TermMapper.ReverseMap(termIdentifier);
+
+        /// <summary>
+        /// Gets the current frame as a collection of term identifiers.
+        /// </summary>
+        /// <returns></returns>
+        public IReadOnlyCollection<ulong> ReadCurrentFrameRootTermIds()
+        {
+            return _termDatabase.CurrentFrame.RootTerms.ToList().AsReadOnly();
+        }
     }
 }
