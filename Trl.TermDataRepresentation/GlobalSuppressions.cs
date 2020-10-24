@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>", Scope = "member", Target = "~M:Trl.TermDataRepresentation.Parser.SemanticValidations.SemanticValidator.CheckClassMappingMembers(Trl.TermDataRepresentation.Parser.AST.ITrlTerm,System.Collections.Generic.List{System.String})")]
+[assembly: SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>", Scope = "member", Target = "~M:Trl.TermDataRepresentation.Database.Unification.UnifierCalculation.GetSyntacticUnifier(Trl.TermDataRepresentation.Database.Unification.Equation,Trl.TermDataRepresentation.Database.TermDatabase)~System.ValueTuple{System.Collections.Generic.IEnumerable{Trl.TermDataRepresentation.Database.Substitution},System.Boolean}")]

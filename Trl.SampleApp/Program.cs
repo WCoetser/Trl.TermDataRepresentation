@@ -1,6 +1,7 @@
 ﻿using System;
 using Trl.TermDataRepresentation.Database;
 using Trl.TermDataRepresentation.Parser;
+using Trl.TermDataRepresentation;
 
 namespace Trl.SampleApp
 {

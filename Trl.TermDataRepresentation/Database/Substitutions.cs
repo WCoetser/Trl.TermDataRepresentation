@@ -12,10 +12,18 @@
         /// </summary>
         public ulong SubstituteTermIdentifier { get; set; }
 
-        public Substitution(Substitution cloneSource = null)
+        public TermDatabase TermDatabase { get; }
+
+        public Substitution(TermDatabase termDatabase)
+        {
+            TermDatabase = termDatabase;
+        }
+
+        public Substitution(Substitution cloneSource)
         {
             if (cloneSource != null)
             {
+                TermDatabase = cloneSource.TermDatabase;
                 MatchTermIdentifier = cloneSource.MatchTermIdentifier;
                 SubstituteTermIdentifier = cloneSource.SubstituteTermIdentifier;
             }

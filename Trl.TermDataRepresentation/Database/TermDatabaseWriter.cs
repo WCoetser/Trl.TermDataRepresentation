@@ -20,7 +20,7 @@ namespace Trl.TermDataRepresentation.Database
 
         public void StoreRewriteRule(RewriteRule rule)
         {
-            _termDatabase.CurrentFrame.Substitutions.Add(new Substitution
+            _termDatabase.CurrentFrame.Substitutions.Add(new Substitution(_termDatabase)
             {
                 MatchTermIdentifier = StoreTerm(rule.MatchTerm).TermIdentifier.Value,
                 SubstituteTermIdentifier = StoreTerm(rule.SubstituteTerm).TermIdentifier.Value

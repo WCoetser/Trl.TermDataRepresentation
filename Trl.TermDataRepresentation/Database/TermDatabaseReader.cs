@@ -54,29 +54,50 @@ namespace Trl.TermDataRepresentation.Database
         }
 
         /// <summary>
-        /// Gets the statement for the label, if it does not exist returns null.
+        /// Gets the internal terms for a label
         /// </summary>
-        public StatementList ReadStatementsForLabel(string label)
+        /// <param name="label"></param>
+        /// <returns></returns>
+        public IEnumerable<Term> ReadInternalTermsForLabel(string label)
         {
             if (!_termDatabase.StringMapper.TryGetMappedValue(label, out ulong? labelInteger))
             {
-                return null;
+                return Enumerable.Empty<Term>();
             }
 
             if (!_termDatabase.LabelToTerm.TryGetValue(labelInteger.Value, out HashSet<ulong> associatedTermIds)
                 || !associatedTermIds.Any())
             {
-                return null;
+                return Enumerable.Empty<Term>();
             }
 
+            LinkedList<Term> retTerms = new LinkedList<Term>();
+            foreach (var termId in associatedTermIds.Intersect(_termDatabase.CurrentFrame.RootTerms))
+            {
+                retTerms.AddLast(GetInternalTermById(termId));
+            }
+            return retTerms;
+        }
+
+        /// <summary>
+        /// Gets the statement for the label, if it does not exist returns null.
+        /// </summary>
+        public StatementList ReadStatementsForLabel(string label)
+        {
             var returnStatements = new StatementList
             {
                 Statements = new List<TermStatement>()
             };
 
-            foreach (var termId in associatedTermIds.Intersect(_termDatabase.CurrentFrame.RootTerms))
+            var terms = ReadInternalTermsForLabel(label);
+            if (!terms.Any())
+            {
+                return null;
+            }
+
+            foreach (var internalTerm in terms)
             {                
-                returnStatements.Statements.Add(ReadRootTermStatement(termId));
+                returnStatements.Statements.Add(ReadRootTermStatement(internalTerm.Name.TermIdentifier.Value));
             }
             return returnStatements;
         }

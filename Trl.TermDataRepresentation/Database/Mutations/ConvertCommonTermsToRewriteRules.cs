@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Trl.TermDataRepresentation.Database.Mutations
 {
@@ -66,14 +67,15 @@ namespace Trl.TermDataRepresentation.Database.Mutations
         private void UpdateGetTermsToProcess(ulong root, Frame inputFrame, Dictionary<ulong, bool> retVal)
         {
             var term = inputFrame.TermDatabase.Reader.GetInternalTermById(root);
-            if (term.Name.Type != SymbolType.NonAcTerm
-                && term.Name.Type != SymbolType.TermList)
+            if ((term.Name.Type != SymbolType.NonAcTerm
+                    && term.Name.Type != SymbolType.TermList)
+                || term.Variables.Any())
             {
                 _ = retVal.TryAdd(root, false);
                 return;
             }            
             
-            if (retVal.TryGetValue(root, out var alreadyFound))
+            if (retVal.ContainsKey(root))
             {
                 retVal[root] = true;
                 // Note: subtree already processed.
@@ -120,7 +122,7 @@ namespace Trl.TermDataRepresentation.Database.Mutations
                 outputFrame.TermDatabase.Writer.StoreTermAndAssignId(substitutionTail);
 
                 // Create rewrite rule using replacement term aguments and new identifier as head
-                outputFrame.Substitutions.Add(new Substitution
+                outputFrame.Substitutions.Add(new Substitution(outputFrame.TermDatabase)
                 {
                     MatchTermIdentifier = replacementIdentifierSymbol.TermIdentifier.Value,
                     SubstituteTermIdentifier = substitutionTail.Name.TermIdentifier.Value
