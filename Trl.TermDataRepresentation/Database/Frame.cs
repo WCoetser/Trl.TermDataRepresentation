@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Trl.TermDataRepresentation.Parser;
 
@@ -44,11 +45,17 @@ namespace Trl.TermDataRepresentation.Database
         /// Some term rewriting systems are non-terminating. In order to cater for this, a limit is imposed.</param>
         public void Rewrite(int iterationLimit = 1000)
         {
+            if (!Substitutions.Any())
+            {
+                return;
+            }
+
             // Keep track of new terms for next iteration of rewriting
             HashSet<ulong> newTermIds = new HashSet<ulong>();
             // These terms could be "soft deleted" in the sense that they are no longer selectable by the serializer
             HashSet<ulong> rewrittenTerms = new HashSet<ulong>();
             int iterationCount = 0;
+
             do
             {
                 // TODO: Optimize
@@ -59,7 +66,11 @@ namespace Trl.TermDataRepresentation.Database
                 {
                     foreach (var termIdentifier in RootTerms)
                     {
-                        ulong newId = CopyAndReplaceForEquality(termIdentifier, substitution.MatchTermIdentifier, substitution.SubstituteTermIdentifier);
+                        var subsitutions = new Dictionary<ulong,ulong>
+                        {
+                            { substitution.MatchTermIdentifier, substitution.SubstituteTermIdentifier }
+                        };
+                        ulong newId = CopyAndReplaceForEquality(termIdentifier, subsitutions);
                         if (termIdentifier != newId)
                         {
                             // In this case rewriting took place and the root terms must be updated
@@ -82,16 +93,15 @@ namespace Trl.TermDataRepresentation.Database
         /// Applies a substitution and returns the ID or the result term.
         /// </summary>
         /// <param name="termIdentifier">The ID of the term being recursively tested to see if it equals _matchTermIdentifier_.</param>
-        /// <param name="matchTermIdentifier">The term ID representing the substitution rule head</param>
-        /// <param name="replacementTerm">The term ID representing the substitution rule tail (i.e. what is being substituted when _matchTermIdentifier_ is matched.</param>
+        /// <param name="matchAndReplaceIdentifiers">A collection of term substitutions in ID form, where the key is the matched term ID and the value is the replacement.</param>
         /// <returns>The ID of the new term, or if the reconstructed term is the same as the old term, the 
         /// ID of the old term.</returns>
-        private ulong CopyAndReplaceForEquality(ulong termIdentifier, ulong matchTermIdentifier, ulong replacementTerm)
+        private ulong CopyAndReplaceForEquality(ulong termIdentifier, Dictionary<ulong, ulong> matchAndReplaceIdentifiers)
         {
             // Root
-            if (termIdentifier == matchTermIdentifier)
+            if (matchAndReplaceIdentifiers.TryGetValue(termIdentifier, out var replacementTermId))
             {
-                return replacementTerm;
+                return replacementTermId;
             }
 
             var term = TermDatabase.Reader.GetInternalTermById(termIdentifier);
@@ -104,7 +114,7 @@ namespace Trl.TermDataRepresentation.Database
                 for (int i = 0; i < newArguments.Length; i++)
                 {
                     var currentId = term.Arguments[i].TermIdentifier.Value;
-                    var newId = CopyAndReplaceForEquality(currentId, matchTermIdentifier, replacementTerm);
+                    var newId = CopyAndReplaceForEquality(currentId, matchAndReplaceIdentifiers);
                     if (newId == currentId)
                     {
                         // No match found

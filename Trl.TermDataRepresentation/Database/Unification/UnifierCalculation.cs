@@ -161,12 +161,11 @@ namespace Trl.TermDataRepresentation.Database.Unification
             {
                 return false;
             }
-
+            // Check that the metadata fields lists matches - this is considered part of the name.
             Symbol lhsMeta = null;
             Symbol rhsMeta = null;
             _ = lhs.MetaData?.TryGetValue(TermMetaData.ClassMemberMappings, out lhsMeta);
             _ = rhs.MetaData?.TryGetValue(TermMetaData.ClassMemberMappings, out rhsMeta);
-
             return (lhsMeta, rhsMeta) switch
             {
                 (null, null) => true,

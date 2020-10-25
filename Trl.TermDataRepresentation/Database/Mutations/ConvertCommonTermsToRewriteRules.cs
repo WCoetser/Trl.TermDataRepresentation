@@ -67,21 +67,21 @@ namespace Trl.TermDataRepresentation.Database.Mutations
         private void UpdateGetTermsToProcess(ulong root, Frame inputFrame, Dictionary<ulong, bool> retVal)
         {
             var term = inputFrame.TermDatabase.Reader.GetInternalTermById(root);
-            if ((term.Name.Type != SymbolType.NonAcTerm
+            if (term.Name.Type != SymbolType.NonAcTerm
                     && term.Name.Type != SymbolType.TermList)
-                || term.Variables.Any())
             {
                 _ = retVal.TryAdd(root, false);
                 return;
             }            
             
-            if (retVal.ContainsKey(root))
+            if (retVal.ContainsKey(root)
+                && !term.Variables.Any())
             {
                 retVal[root] = true;
                 // Note: subtree already processed.
                 return;
             }
-            retVal.Add(root, false);
+            _ = retVal.TryAdd(root, false);
 
             foreach (var arg in term.Arguments)
             {

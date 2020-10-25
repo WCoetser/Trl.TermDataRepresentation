@@ -19,6 +19,8 @@ namespace Trl.TermDataRepresentation.Tests
         [InlineData("root: t(s(q(1)), s(q(1)), 123, \"abc\");", "﻿root: t(s0,s0,123,\"abc\");s0 => s(q(1));")]
         [InlineData("root: r(t((1,2,3)), s((1,2,3)), (1,2,3));", "﻿root: r(t(l0),s(l0),l0);l0 => (1,2,3);")]
         [InlineData("point1: (1,2,3); point2: (1,2,3);", "﻿point1,point2: (1,2,3);")]
+        [InlineData("point1: (:x,2,3); point2: (:x,2,3);", "﻿point1,point2: (:x,2,3);")]
+        [InlineData("root: t(s(:x), s(:x));", "﻿root: t(s(:x),s(:x));")]
         [Theory]
         public void ShouldConvertTermsToRewriteRulesForDuplicates(string testInput, string expectedOutput)
         {
@@ -45,12 +47,6 @@ namespace Trl.TermDataRepresentation.Tests
             // Assert
             var output = database.Reader.ReadCurrentFrame().ToSourceCode();
             Assert.Contains("s(1) => t(1);", output);
-        }
-
-        [Fact(Skip = "TODO: First implement unification and rewriting, test with serializer")]
-        public void ShouldNotConvertTermsWithVariables()
-        {
-            throw new NotImplementedException();
         }
     }
 }
