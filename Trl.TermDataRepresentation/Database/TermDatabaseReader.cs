@@ -188,5 +188,26 @@ namespace Trl.TermDataRepresentation.Database
         {
             return _termDatabase.CurrentFrame.RootTerms.ToList().AsReadOnly();
         }
+
+        /// <summary>
+        /// Gets all terms and subterms contained in an expression tree for the given term ID.
+        /// </summary>        
+        public IEnumerable<Term> GetAllTermsAndSubtermsForTermId(ulong startTermId)
+        {
+            var next = new Stack<ulong>();
+            var retVal = new List<Term>();
+            next.Push(startTermId);
+            while (next.Count > 0)
+            {
+                var current = next.Pop();
+                var term = GetInternalTermById(startTermId);
+                retVal.Add(term);
+                foreach (var arg in term.Arguments)
+                {
+                    next.Push(arg.TermIdentifier.Value);
+                }
+            }
+            return retVal;
+        }
     }
 }

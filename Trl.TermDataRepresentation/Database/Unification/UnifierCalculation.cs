@@ -6,13 +6,20 @@ namespace Trl.TermDataRepresentation.Database.Unification
 {
     public class UnifierCalculation
     {
+        private readonly TermDatabase _termDatabase;
+
+        public UnifierCalculation(TermDatabase termDatabase)
+        {
+            _termDatabase = termDatabase;
+        }
+
         /// <summary>
         /// Calculates a unifier for the terms in the input equation.
         /// </summary>
         /// <param name="unificationProblem">Gives the two terms that have to be unified.</param>
         /// <param name="storage">Database associated with the terms in the unification problem.</param>
         /// <returns>Substitutuions for variables and a boolean indicating whether unification succeeded.</returns>
-        public (IEnumerable<Substitution> substitutions, bool succeed) GetSyntacticUnifier(Equation unificationProblem, TermDatabase storage)
+        public (IEnumerable<Substitution> substitutions, bool succeed) GetSyntacticUnifier(Equation unificationProblem)
         {
             // See Franz Baader and Wayne Snyder (2001). "Unification Theory". In John Alan Robinson and Andrei Voronkov, 
             // editors, Handbook of Automated Reasoning, volume I, pages 447–533. Elsevier Science Publishers.
@@ -72,7 +79,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
                 // Variable elimination
                 if (lhs.Name.Type == SymbolType.Variable)
                 {
-                    if (!CreateAndUpdateSubstitutions(next, substitutions, currentEquations, storage))
+                    if (!CreateAndUpdateSubstitutions(next, substitutions, currentEquations))
                     {
                         // Fail: same variable mapped to different values
                         return (Enumerable.Empty<Substitution>(), false);
@@ -85,8 +92,8 @@ namespace Trl.TermDataRepresentation.Database.Unification
                 {
                     for (int i = 0; i < lhs.Arguments.Length; i++)
                     {
-                        var tLhs = storage.Reader.GetInternalTermById(lhs.Arguments[i].TermIdentifier.Value);
-                        var tRhs = storage.Reader.GetInternalTermById(rhs.Arguments[i].TermIdentifier.Value);
+                        var tLhs = _termDatabase.Reader.GetInternalTermById(lhs.Arguments[i].TermIdentifier.Value);
+                        var tRhs = _termDatabase.Reader.GetInternalTermById(rhs.Arguments[i].TermIdentifier.Value);
                         currentEquations.Enqueue(new Equation { Lhs = tLhs, Rhs = tRhs });
                     }
                 }
@@ -99,7 +106,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
         /// Creates new substitutions and applies them to the current substitutions and equations to eliminate existing variables.
         /// </summary>        
         /// <returns>True is succeed, false if a value clash occurs (ie. the same variable mapped to different values.)</returns>
-        private bool CreateAndUpdateSubstitutions(Equation next, List<Substitution> substitutions, Queue<Equation> currentEquations, TermDatabase storage)
+        private bool CreateAndUpdateSubstitutions(Equation next, List<Substitution> substitutions, Queue<Equation> currentEquations)
         {
             // Check if same variable would be mapped to different values
             foreach (var substitution in substitutions)
@@ -113,7 +120,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
             }
 
             // Create the new substitution
-            var newSubstitution = new Substitution(storage)
+            var newSubstitution = new Substitution(_termDatabase)
             {
                 MatchTermIdentifier = next.Lhs.Name.TermIdentifier.Value,
                 SubstituteTermIdentifier = next.Rhs.Name.TermIdentifier.Value
@@ -122,7 +129,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
             // Apply new substitution to current substitutions to eleminate the variable and in the process solve it
             foreach (var substitution in substitutions)
             {
-                substitution.SubstituteTermIdentifier = ApplySubstitution(newSubstitution, substitution.SubstituteTermIdentifier, storage);
+                substitution.SubstituteTermIdentifier = ApplySubstitution(newSubstitution, substitution.SubstituteTermIdentifier);
             }
             substitutions.Add(newSubstitution);
 
@@ -133,18 +140,18 @@ namespace Trl.TermDataRepresentation.Database.Unification
             // Apply new substitution to current equations to eleminate variable and in the process "solve" it
             foreach (var eq in currentEquations)
             {
-                var lhs_s = ApplySubstitution(newSubstitution, eq.Lhs.Name.TermIdentifier.Value, storage);
-                var rhs_s = ApplySubstitution(newSubstitution, eq.Rhs.Name.TermIdentifier.Value, storage);
-                eq.Lhs = storage.Reader.GetInternalTermById(lhs_s);
-                eq.Rhs = storage.Reader.GetInternalTermById(rhs_s);
+                var lhs_s = ApplySubstitution(newSubstitution, eq.Lhs.Name.TermIdentifier.Value);
+                var rhs_s = ApplySubstitution(newSubstitution, eq.Rhs.Name.TermIdentifier.Value);
+                eq.Lhs = _termDatabase.Reader.GetInternalTermById(lhs_s);
+                eq.Rhs = _termDatabase.Reader.GetInternalTermById(rhs_s);
             }
 
             return true;
         }
 
-        private ulong ApplySubstitution(Substitution newSubstitution, ulong substituteTermIdentifier, TermDatabase storage)
+        private ulong ApplySubstitution(Substitution newSubstitution, ulong substituteTermIdentifier)
         {
-            var substitutionFrame = new Frame(storage);
+            var substitutionFrame = new Frame(_termDatabase);
             substitutionFrame.RootTerms.Add(substituteTermIdentifier);
             substitutionFrame.Substitutions.Add(newSubstitution);
             substitutionFrame.Rewrite(int.MaxValue);

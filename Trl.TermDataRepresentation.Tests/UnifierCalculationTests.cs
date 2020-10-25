@@ -16,13 +16,13 @@ namespace Trl.TermDataRepresentation.Tests
         {
             // Arrange
             var database = TestUtilities.LoadStatements(testCode);
-            var unification = new UnifierCalculation();
+            var unification = new UnifierCalculation(database);
             var lhs = database.Reader.ReadInternalTermsForLabel("lhs").Single();
             var rhs = database.Reader.ReadInternalTermsForLabel("rhs").Single();
 
             // Act
             var eq = new Equation { Lhs = lhs, Rhs = rhs };
-            var unifier = unification.GetSyntacticUnifier(eq, database);
+            var unifier = unification.GetSyntacticUnifier(eq);
 
             // Assert
             Assert.False(unifier.succeed);
@@ -47,13 +47,13 @@ namespace Trl.TermDataRepresentation.Tests
         {
             // Arrange
             var database = TestUtilities.LoadStatements(testCode);
-            var unification = new UnifierCalculation();
+            var unification = new UnifierCalculation(database);
             var lhs = database.Reader.ReadInternalTermsForLabel("lhs").Single();
             var rhs = database.Reader.ReadInternalTermsForLabel("rhs").Single();
 
             // Act
             var eq = new Equation { Lhs = lhs, Rhs = rhs };
-            var unifier = unification.GetSyntacticUnifier(eq, database);
+            var unifier = unification.GetSyntacticUnifier(eq);
 
             // Assert
             Assert.True(unifier.succeed);

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Trl.TermDataRepresentation.Parser;
+using Trl.TermDataRepresentation.Database.Unification;
 
 namespace Trl.TermDataRepresentation.Database
 {
@@ -66,17 +65,62 @@ namespace Trl.TermDataRepresentation.Database
                 {
                     foreach (var termIdentifier in RootTerms)
                     {
-                        var subsitutions = new Dictionary<ulong,ulong>
+                        // Use unification to generate variable substitutions if needed
+                        var substitutionHeadTerm = TermDatabase.Reader.GetInternalTermById(substitution.MatchTermIdentifier);
+                        var shouldNotUseUnification = !substitutionHeadTerm.Variables.Any() || substitutionHeadTerm.Name.Type == SymbolType.Variable;
+                        Dictionary<ulong, ulong> subsitutions = null;
+                        if (shouldNotUseUnification)
                         {
-                            { substitution.MatchTermIdentifier, substitution.SubstituteTermIdentifier }
-                        };
-                        ulong newId = CopyAndReplaceForEquality(termIdentifier, subsitutions);
-                        if (termIdentifier != newId)
+                            // Case 1: Unification not needed
+                            subsitutions = new Dictionary<ulong,ulong>
+                            {
+                                { substitution.MatchTermIdentifier, substitution.SubstituteTermIdentifier }
+                            };
+
+                            // Apply substitutions
+                            ulong newId = CopyAndReplaceForEquality(termIdentifier, subsitutions);
+                            if (termIdentifier != newId)
+                            {
+                                // In this case rewriting took place and the root terms must be updated
+                                newTermIds.Add(newId);
+                                rewrittenTerms.Add(termIdentifier);
+                                TermDatabase.Writer.CopyLabels(termIdentifier, newId);
+                            }
+                        }
+                        else
                         {
-                            // In this case rewriting took place and the root terms must be updated
-                            newTermIds.Add(newId);
-                            rewrittenTerms.Add(termIdentifier);
-                            TermDatabase.Writer.CopyLabels(termIdentifier, newId);
+                            UnifierCalculation unifierCalculation = new UnifierCalculation(TermDatabase);
+
+                            // Case 2: Unification needed
+                            // - Test every subtree of the current term against the substitution for unification
+                            // - Substitute the substitution tail using the unifier
+                            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(termIdentifier))
+                            {
+                                var unificationResult = unifierCalculation.GetSyntacticUnifier(new Equation { Lhs = substitutionHeadTerm, Rhs = termGraphMember });
+                                if (unificationResult.succeed)
+                                {
+                                    // Generate replacement term using unifier
+                                    // - Substitutions can only be from a variable to a term
+                                    var substitutions = unificationResult.substitutions.ToDictionary(s => s.MatchTermIdentifier, s => s.SubstituteTermIdentifier);
+                                    var tailSubstitutionValue = CopyAndReplaceForEquality(substitution.SubstituteTermIdentifier, substitutions);
+                                    // Replace subterm of current term with calculated replacement
+                                    var replacementSub = new Dictionary<ulong, ulong>
+                                    {
+                                        {  
+                                            termGraphMember.Name.TermIdentifier.Value,
+                                            tailSubstitutionValue
+                                        }
+                                    };
+                                    var newId = CopyAndReplaceForEquality(termIdentifier, replacementSub);
+                                    if (termIdentifier != newId)
+                                    {
+                                        // In this case rewriting took place and the root terms must be updated
+                                        newTermIds.Add(newId);
+                                        rewrittenTerms.Add(termIdentifier);
+                                        TermDatabase.Writer.CopyLabels(termIdentifier, newId);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -93,7 +137,10 @@ namespace Trl.TermDataRepresentation.Database
         /// Applies a substitution and returns the ID or the result term.
         /// </summary>
         /// <param name="termIdentifier">The ID of the term being recursively tested to see if it equals _matchTermIdentifier_.</param>
-        /// <param name="matchAndReplaceIdentifiers">A collection of term substitutions in ID form, where the key is the matched term ID and the value is the replacement.</param>
+        /// <param name="matchAndReplaceIdentifiers">A collection of term substitutions in ID form, where the key is 
+        /// the matched term ID and the value is the replacement. This is a dictionary because it needs to cater for unification 
+        /// scenarios were a collectrion of variable mappings is passed in. It should only contain one enrty for cases where unification 
+        /// is not needed.</param>
         /// <returns>The ID of the new term, or if the reconstructed term is the same as the old term, the 
         /// ID of the old term.</returns>
         private ulong CopyAndReplaceForEquality(ulong termIdentifier, Dictionary<ulong, ulong> matchAndReplaceIdentifiers)
