@@ -1,7 +1,5 @@
 # Description
 
-**Note: Work in progress, many optimizations are possible but not currently implemented**
-
 The overall aim of this project is to create a term rewriting system that could be useful in everyday programming, and to represent  data in a way that roughly correspond to the definition of a _term_ in formal logic. (see [Wikipedia](https://en.wikipedia.org/wiki/Term_(logic))). _Terms_ should be familiar to any programmer because they are basically constants, variables, and function symbols.
 
 In order to achieve this goal, four projects were created and hosted on github:
@@ -74,6 +72,53 @@ This will result in:
 ```C#
 root: b;
 a => b;
+```
+
+It is also possible to use variables, represented with a colon in front of an identifier, for example:
+
+```C#
+:x;
+```
+
+When this is used with a substitution, syntactic unification (see [Wikipedia](https://en.wikipedia.org/wiki/Unification_(computer_science)#Syntactic_unification_of_first-order_terms)) is used to calculate values for the variables involved that will unify the substitution rule head with a given term. These substitutions are used in the tail (right hand side of the arrow) of the variable to create a substitute term.
+
+For example, this input:
+
+```C#
+t(1);
+t(:x) => s(:x);
+```
+
+Will result in this output:
+
+```C#
+s(1);
+t(:x) => s(:x);
+```
+
+Labels are copied accross during subtitution, making it easy to find the result. For example:
+
+```C#
+root: t(1);
+t(:x) => s(:x);
+```
+
+Will result in:
+
+```C#
+root: s(1);
+t(:x) => s(:x);
+```
+
+There is one special case for the use of variables in substitutions: When the rule head is a variable, it will be treated as a normal syntactic substitution, and unification will not be used. This will prevent the rewrite rule from being applied to each and every given term.
+
+Unification also works on terms with class field mappings, and lists. This is useful for the serialization discussed earlier, ex.
+
+```C#
+point<x,y>(1,2);
+point<x,y>(:x,:y) => point<y,x>(:y, :x);
+(1,2,3);
+(:x,:y,:z) => (:x, :y);
 ```
 
 # Simple example - Loading terms and running substitutions

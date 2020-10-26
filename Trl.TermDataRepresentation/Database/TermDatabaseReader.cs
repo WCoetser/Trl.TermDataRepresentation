@@ -200,11 +200,14 @@ namespace Trl.TermDataRepresentation.Database
             while (next.Count > 0)
             {
                 var current = next.Pop();
-                var term = GetInternalTermById(startTermId);
+                var term = GetInternalTermById(current);
                 retVal.Add(term);
-                foreach (var arg in term.Arguments)
+                if (term.Arguments != null)
                 {
-                    next.Push(arg.TermIdentifier.Value);
+                    foreach (var arg in term.Arguments)
+                    {
+                        next.Push(arg.TermIdentifier.Value);
+                    }
                 }
             }
             return retVal;

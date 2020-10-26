@@ -67,6 +67,8 @@ namespace Trl.TermDataRepresentation.Database.Unification
                     var temp = lhs;
                     next.Lhs = next.Rhs;
                     next.Rhs = temp;
+                    currentEquations.Enqueue(next);
+                    continue;
                 }
 
                 // Occurs check - The case where LHS = RHS and LHS is variable already covered under "Trivial" case

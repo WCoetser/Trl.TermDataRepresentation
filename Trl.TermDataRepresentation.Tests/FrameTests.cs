@@ -179,5 +179,27 @@ namespace Trl.TermDataRepresentation.Tests
             var result = termDatabase.Reader.ReadStatementsForLabel("root");
             Assert.True(StringComparer.InvariantCulture.Equals("root: t(t(t(t(x))));", result.ToSourceCode()));
         }
+
+        [InlineData("t(1); t(:x) => s(:x);", "s(1);t(:x) => s(:x);")]
+        [InlineData("t(1,2); t(:x,:y) => s(:y,:x);", "s(2,1);t(:x,:y) => s(:y,:x);")]
+        [InlineData("t(s(1)); s(:x) => t(:x);", "t(t(1));s(:x) => t(:x);")]
+        [InlineData("(t(1)); t(:x) => (:x);", "((1));t(:x) => (:x);")]
+        [InlineData("aaa(:x); :x => bbb;", "aaa(bbb);:x => bbb;")]
+        [InlineData("root: aaa(bbb(:x)); bbb(:x) => b; bbb(:x) => c;", "root: aaa(b);root: aaa(c);bbb(:x) => b;bbb(:x) => c;")]
+        [InlineData("point<x,y>(1,2); point<x,y>(:x,:y) => point<y,x>(:y, :x);", "point<y,x>(2,1);point<x,y>(:x,:y) => point<y,x>(:y,:x);")]
+        [InlineData("(1,2,3); (:x,:y,:z) => (:x, :y);", "(1,2);(:x,:y,:z) => (:x,:y);")]
+        [Theory]
+        public void ShouldApplyUnificationToRewriteProblem(string input, string expectedOutput)
+        {
+            // Arrange
+            var termDatabase = TestUtilities.LoadStatements(input);
+
+            // Act
+            termDatabase.ExecuteRewriteRules();
+
+            // Assert
+            var results = termDatabase.Reader.ReadCurrentFrame().ToSourceCode();
+            Assert.True(StringComparer.InvariantCulture.Equals(expectedOutput, results));
+        }
     }
 }
