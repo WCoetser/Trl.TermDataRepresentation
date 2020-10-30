@@ -6,7 +6,7 @@
     <!-- BEGIN NUGET METADATA -->
 
     <PackageId>Trl.TermDataRepresentation</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Wikus Coetser</Authors>
     <Company></Company>
     <Title>Term Data Representation</Title>
@@ -29,6 +29,10 @@
     <!-- END NUGET METADATA -->
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Database\TermEvaluator.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Trl.IntegerMapper" Version="1.0.1" />

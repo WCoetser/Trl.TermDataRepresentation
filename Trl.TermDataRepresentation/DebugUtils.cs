@@ -11,8 +11,8 @@ namespace Trl.TermDataRepresentation
         public static string ToSourceCode(this Substitution substitution)
         {
             var reader = substitution.TermDatabase.Reader;
-            var head = reader.ReadTerm(substitution.MatchTermIdentifier).ToSourceCode();
-            var tail = reader.ReadTerm(substitution.SubstituteTermIdentifier).ToSourceCode();
+            var head = reader.ReadTerm(substitution.MatchTerm).ToSourceCode();
+            var tail = reader.ReadTerm(substitution.SubstituteTerm).ToSourceCode();
             return $"{head} => {tail};";
         }
 

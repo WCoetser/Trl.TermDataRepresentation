@@ -26,7 +26,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Maps integers for string labels to integers for term identifiers.
         /// </summary>
-        internal Dictionary<ulong, HashSet<ulong>> LabelToTerm { get; }
+        internal Dictionary<ulong, HashSet<Term>> LabelToTerm { get; }
 
         internal Frame CurrentFrame { get; set; }
 
@@ -38,7 +38,7 @@ namespace Trl.TermDataRepresentation.Database
         {
             StringMapper = new StringMapper();
             TermMapper = new EqualityComparerMapper<Term>(new IntegerMapperTermEqualityComparer());
-            LabelToTerm = new Dictionary<ulong, HashSet<ulong>>();
+            LabelToTerm = new Dictionary<ulong, HashSet<Term>>();
             CurrentFrame = new Frame(this);
             _writer = new Lazy<TermDatabaseWriter>(() =>  new TermDatabaseWriter(this));
             _reader = new Lazy<TermDatabaseReader>(() => new TermDatabaseReader(this));

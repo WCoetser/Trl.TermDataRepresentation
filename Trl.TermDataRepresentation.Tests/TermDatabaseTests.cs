@@ -65,12 +65,12 @@ namespace Trl.TermDataRepresentation.Tests
         {
             // Act
             var testAst1 = ParseStatement(testInput);
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(testAst1.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(testAst1.Term);
             var testAst2 = ParseStatement(testInput);
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(testAst2.Term).TermIdentifier.Value;
+            var t2 = _termDatabase.Writer.StoreTerm(testAst2.Term);
 
             // Assert
-            Assert.Equal(testIdentifier1, testIdentifier2);
+            Assert.Equal(t1, t2);
         }
 
         [Fact]
@@ -81,11 +81,11 @@ namespace Trl.TermDataRepresentation.Tests
             var str = ParseStatement("\"123\";");
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(num.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(str.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(num.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(str.Term);
 
             // Assert
-            Assert.NotEqual(testIdentifier1, testIdentifier2);
+            Assert.NotEqual(t1, t2);
         }
 
         [Fact]
@@ -96,11 +96,11 @@ namespace Trl.TermDataRepresentation.Tests
             var str = ParseStatement("\"_123\";");
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(id.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(str.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(id.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(str.Term);
 
             // Assert
-            Assert.NotEqual(testIdentifier1, testIdentifier2);
+            Assert.NotEqual(t1, t2);
         }
 
         [InlineData("((), (1,2,3), (\"abc\"));")]
@@ -115,11 +115,11 @@ namespace Trl.TermDataRepresentation.Tests
             var rhs = ParseStatement(testList);
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(lhs.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(rhs.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(lhs.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(rhs.Term);
 
             // Assert
-            Assert.Equal(testIdentifier1, testIdentifier2);
+            Assert.Equal(t1, t2);
         }
 
         [InlineData("a(a(),b(),c());")]
@@ -134,11 +134,11 @@ namespace Trl.TermDataRepresentation.Tests
             var rhs = ParseStatement(testTerm);
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(lhs.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(rhs.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(lhs.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(rhs.Term);
 
             // Assert
-            Assert.Equal(testIdentifier1, testIdentifier2);
+            Assert.Equal(t1, t2);
         }
 
 
@@ -153,11 +153,11 @@ namespace Trl.TermDataRepresentation.Tests
             var rhs = ParseStatement(rhsTerm);
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(lhs.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(rhs.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(lhs.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(rhs.Term);
 
             // Assert
-            Assert.Equal(expectedEquals, testIdentifier1 == testIdentifier2);
+            Assert.Equal(expectedEquals, t1 == t2);
         }
 
         [Fact]
@@ -168,11 +168,11 @@ namespace Trl.TermDataRepresentation.Tests
             var rhs = ParseStatement("a();");
 
             // Act
-            var testIdentifier1 = _termDatabase.Writer.StoreTerm(lhs.Term).TermIdentifier.Value;
-            var testIdentifier2 = _termDatabase.Writer.StoreTerm(rhs.Term).TermIdentifier.Value;
+            var t1 = _termDatabase.Writer.StoreTerm(lhs.Term);
+            var t2 = _termDatabase.Writer.StoreTerm(rhs.Term);
 
             // Assert
-            Assert.NotEqual(testIdentifier1, testIdentifier2);
+            Assert.NotEqual(t1, t2);
         }
 
         [Fact]
@@ -236,10 +236,9 @@ namespace Trl.TermDataRepresentation.Tests
             _termDatabase.Writer.StoreStatements(parseResult.Statements);
 
             // Assert
-            var outputTermId = _termDatabase.Reader.ReadCurrentFrameRootTermIds().First();
-            var term = _termDatabase.Reader.GetInternalTermById(outputTermId);
-            Assert.Equal(expectedVariables.Length, term.Variables.Count);
-            foreach (var v in term.Variables)
+            var outputTerm = _termDatabase.Reader.ReadCurrentFrameRootTerms().First();
+            Assert.Equal(expectedVariables.Length, outputTerm.Variables.Count);
+            foreach (var v in outputTerm.Variables)
             {
                 var termV = _termDatabase.Reader.ReadTerm(v);
                 var varName = termV.ToSourceCode();

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.TermDataRepresentation.Tests", "Trl.TermDataRepresentation.Tests\Trl.TermDataRepresentation.Tests.csproj", "{DBA3ACE4-5AB0-4D7A-8BDC-A5A1987EA3F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trl.SampleApp", "Trl.SampleApp\Trl.SampleApp.csproj", "{8FE49ADA-D35C-4B42-B038-9769BAEE6F71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trl.SampleApp", "Trl.SampleApp\Trl.SampleApp.csproj", "{8FE49ADA-D35C-4B42-B038-9769BAEE6F71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

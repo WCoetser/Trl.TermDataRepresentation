@@ -22,27 +22,26 @@ namespace Trl.TermDataRepresentation.Database
         {
             _termDatabase.CurrentFrame.Substitutions.Add(new Substitution(_termDatabase)
             {
-                MatchTermIdentifier = StoreTerm(rule.MatchTerm).TermIdentifier.Value,
-                SubstituteTermIdentifier = StoreTerm(rule.SubstituteTerm).TermIdentifier.Value
+                MatchTerm = StoreTerm(rule.MatchTerm),
+                SubstituteTerm = StoreTerm(rule.SubstituteTerm)
             });
         }
 
         /// <summary>
         /// Assigns a label to a term for easy later retrieval.
         /// </summary>
-        /// <param name="termIdToLabel">ID of the term recieving the label.</param>
+        /// <param name="term">Term recieving the label.</param>
         /// <param name="labelToAssign">The label to assign.</param>
-        public void LabelTerm(ulong termIdToLabel, string labelToAssign)
+        public void LabelTerm(Term term, string labelToAssign)
         {
             ulong labelId = _termDatabase.StringMapper.Map(labelToAssign);
-            var term = _termDatabase.Reader.GetInternalTermById(termIdToLabel);
-            if (!_termDatabase.LabelToTerm.TryGetValue(labelId, out HashSet<ulong> referencedTerms))
+            if (!_termDatabase.LabelToTerm.TryGetValue(labelId, out HashSet<Term> referencedTerms))
             {
-                referencedTerms = new HashSet<ulong>();
+                referencedTerms = new HashSet<Term>();
                 _termDatabase.LabelToTerm.Add(labelId, referencedTerms);
             }
             term.Labels.Add(labelId);
-            referencedTerms.Add(term.Name.TermIdentifier.Value);
+            referencedTerms.Add(term);
         }
 
         /// <summary>
@@ -50,24 +49,24 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public void StoreStatement(TermStatement statement)
         {
-            ulong termIdentifier = StoreTerm(statement.Term).TermIdentifier.Value;
+            var term = StoreTerm(statement.Term);
             if (statement.Label != null)
             {
                 foreach (var identifier in statement.Label.Identifiers)
                 {
-                    LabelTerm(termIdentifier, identifier.Name);
+                    LabelTerm(term, identifier.Name);
                 }
             }
-            SetAsRootTerm(termIdentifier);
+            SetAsRootTerm(term);
         }
 
         /// <summary>
-        /// Adds the term ID to the current frame for the term database,
+        /// Adds the term to the current frame for the term database,
         /// making it a root term.
         /// </summary>
-        public void SetAsRootTerm(ulong termIdentifier)
+        public void SetAsRootTerm(Term term)
         {
-            _termDatabase.CurrentFrame.RootTerms.Add(termIdentifier);
+            _termDatabase.CurrentFrame.RootTerms.Add(term);
         }
 
         /// <summary>
@@ -93,7 +92,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="value"></param>
         /// <param name="symbolType"></param>
         /// <returns></returns>
-        public Symbol StoreAtom(string value, SymbolType symbolType)
+        public Term StoreAtom(string value, SymbolType symbolType)
         {
             if (symbolType != SymbolType.Number 
                 && symbolType != SymbolType.Identifier
@@ -103,53 +102,44 @@ namespace Trl.TermDataRepresentation.Database
             }
 
             ulong numName = _termDatabase.StringMapper.Map(value);
-            var term = new Term(new Symbol(numName, symbolType), null, new HashSet<ulong>());
-            StoreTermAndAssignId(term);
-            return term.Name;
+            return StoreTermAndAssignId(new Symbol(numName, symbolType), null, new HashSet<Term>());
         }
 
-        public Symbol StoreVariable(string name)
+        public Term StoreVariable(string name)
         {
             ulong varName = _termDatabase.StringMapper.Map(name);
-            var variables = new HashSet<ulong>();
-            var term = new Term(new Symbol(varName, SymbolType.Variable), null, variables);
-            StoreTermAndAssignId(term);
-            variables.Add(term.Name.TermIdentifier.Value);
-            return term.Name;
+            var variables = new HashSet<Term>();
+            var termOut = StoreTermAndAssignId(new Symbol(varName, SymbolType.Variable), null, variables);
+            variables.Add(termOut);
+            return termOut;
         }
 
-        public Symbol StoreTermList(Symbol[] terms)
+        public Term StoreTermList(Term[] terms)
         {
-            var variables = new HashSet<ulong>();
-            foreach (var termSymbol in terms)
-            {
-                var t = _termDatabase.Reader.GetInternalTermById(termSymbol.TermIdentifier.Value);
-                variables.UnionWith(t.Variables);
-            }
-            var term = new Term(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), terms, variables);
-            StoreTermAndAssignId(term);
-            return term.Name;
+            return StoreTermAndAssignId(new Symbol(MapConstants.NullOrEmpty, SymbolType.TermList), terms, GetVariables(terms));
         }
 
-        public Symbol StoreNonAcTerm(string termName, Symbol[] arguments, Dictionary<TermMetaData, Symbol> metadata)
+        private HashSet<Term> GetVariables(Term[] arguments)
         {
-            var variables = new HashSet<ulong>();
+            var variables = new HashSet<Term>();
             foreach (var arg in arguments)
             {
-                var t = _termDatabase.Reader.GetInternalTermById(arg.TermIdentifier.Value);
-                variables.UnionWith(t.Variables);
+                variables.UnionWith(arg.Variables);
             }
+            return variables;
+        }
+
+        public Term StoreNonAcTerm(string termName, Term[] arguments, Dictionary<TermMetaData, Term> metadata)
+        {
             ulong numTermName = _termDatabase.StringMapper.Map(termName);
-            var term = new Term(new Symbol(numTermName, SymbolType.NonAcTerm), arguments, variables, metadata);
-            StoreTermAndAssignId(term);
-            return term.Name;
+            return StoreTermAndAssignId(new Symbol(numTermName, SymbolType.NonAcTerm), arguments, GetVariables(arguments), metadata);
         }
 
         /// <summary>
         /// Saves an AST term and returns a symbol uniquely identifying it.
         /// Does no add term to set of root terms for rewriting.
         /// </summary>
-        public Symbol StoreTerm(ITrlTerm parseResult)
+        public Term StoreTerm(ITrlTerm parseResult)
         {
             if (parseResult is Identifier id)
             {
@@ -183,9 +173,9 @@ namespace Trl.TermDataRepresentation.Database
             }            
         }
 
-        private Dictionary<TermMetaData, Symbol> StoreMetadata(NonAcTerm nonAcTerm)
+        private Dictionary<TermMetaData, Term> StoreMetadata(NonAcTerm nonAcTerm)
         {
-            Dictionary<TermMetaData, Symbol> metadata = new Dictionary<TermMetaData, Symbol>();
+            var metadata = new Dictionary<TermMetaData, Term>();
 
             var identifiers = nonAcTerm.ClassMemberMappings?.ClassMembers?.Cast<ITrlTerm>().ToList();
             if (identifiers == null || !identifiers.Any())
@@ -207,23 +197,39 @@ namespace Trl.TermDataRepresentation.Database
         /// Loads a new term and assigns an ID.
         /// </summary>
         /// <param name="term">Term to save</param>
-        public void StoreTermAndAssignId(Term term)
+        private Term StoreTermAndAssignId(Symbol name, Term[] arguments, HashSet<Term> variables, Dictionary<TermMetaData, Term> metaData = null)
         {
+            var term = new Term(name, arguments, variables, metaData);
             var termId = _termDatabase.TermMapper.Map(term);
-            term.Name.TermIdentifier = termId;
+            // If this is an existing term, it should return an equal term with the same id
+            // Use the ID to get the existing object instance
+            var returnTerm = _termDatabase.TermMapper.ReverseMap(termId);
+            returnTerm.Name.TermIdentifier = termId;
+            return returnTerm;
+        }
+
+        public Term CreateCopy(Term source, Term[] newArguments)
+        {
+            var newSymbol = new Symbol(source.Name.AssociatedStringValue, source.Name.Type);
+            var newMetaData = source.MetaData != null ? new Dictionary<TermMetaData, Term>(source.MetaData) : null;
+            var variables = GetVariables(newArguments);
+            var termOut = StoreTermAndAssignId(newSymbol, newArguments, variables, newMetaData);
+            if (source.Name.Type == SymbolType.Variable)
+            {
+                variables.Add(termOut);
+            }
+            return termOut;
         }
 
         /// <summary>
-        /// Make <paramref name="toTermId"/> term retrievable with labels for <paramref name="fromTermId"/> term.
+        /// Make <paramref name="toTerm"/> term retrievable with labels for <paramref name="fromTerm"/> term.
         /// </summary>
-        internal void CopyLabels(ulong fromTermId, ulong toTermId)
+        internal void CopyLabels(Term fromTerm, Term toTerm)
         {
-            var sourceTerm = _termDatabase.TermMapper.ReverseMap(fromTermId);
-            var destinationTerm = _termDatabase.TermMapper.ReverseMap(toTermId);
-            foreach (var l in sourceTerm.Labels)
+            foreach (var l in fromTerm.Labels)
             {
-                destinationTerm.Labels.Add(l);
-                _termDatabase.LabelToTerm[l].Add(toTermId);
+                toTerm.Labels.Add(l);
+                _termDatabase.LabelToTerm[l].Add(toTerm);
             }
         }
     }

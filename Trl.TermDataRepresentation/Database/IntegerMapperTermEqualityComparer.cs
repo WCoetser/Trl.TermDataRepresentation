@@ -43,7 +43,7 @@ namespace Trl.TermDataRepresentation.Database
                 for (int i = 0; i < x.Arguments.Length && argsMatch; i++)
                 {
                     // Term arguments must have identifiers.
-                    argsMatch = x.Arguments[i].TermIdentifier.Value == y.Arguments[i].TermIdentifier.Value;
+                    argsMatch = x.Arguments[i].Name.TermIdentifier.Value == y.Arguments[i].Name.TermIdentifier.Value;
                 }
             }
             if (!argsMatch)
@@ -69,8 +69,8 @@ namespace Trl.TermDataRepresentation.Database
                 foreach (var pair in x.MetaData)
                 {
                     TermMetaData name = pair.Key;
-                    if (!y.MetaData.TryGetValue(name, out Symbol yValue)
-                        || pair.Value.TermIdentifier.Value != yValue.TermIdentifier.Value)
+                    if (!y.MetaData.TryGetValue(name, out Term yValue)
+                        || pair.Value.Name.TermIdentifier.Value != yValue.Name.TermIdentifier.Value)
                     {
                         return false;
                     }
@@ -90,7 +90,7 @@ namespace Trl.TermDataRepresentation.Database
                 // Arguments must always have term identifiers
                 for (int i = 0; i < x.Arguments.Length; i++)
                 {
-                    hash.Add(x.Arguments[i].TermIdentifier.Value);
+                    hash.Add(x.Arguments[i].Name.TermIdentifier.Value);
                 }
             }
             if (x.MetaData != null)
@@ -100,7 +100,7 @@ namespace Trl.TermDataRepresentation.Database
                 {
                     HashCode nestedCode = new HashCode();
                     nestedCode.Add(pair.Key);
-                    nestedCode.Add(pair.Value.TermIdentifier.Value);
+                    nestedCode.Add(pair.Value.Name.TermIdentifier.Value);
                     v ^= nestedCode.ToHashCode();
                 }
                 hash.Add(v);

@@ -24,8 +24,8 @@ namespace Trl.TermDataRepresentation.Database
             {
                 substitutions.Add(new RewriteRule
                 {
-                    MatchTerm = ReadTerm(s.MatchTermIdentifier),
-                    SubstituteTerm = ReadTerm(s.SubstituteTermIdentifier)
+                    MatchTerm = ReadTerm(s.MatchTerm),
+                    SubstituteTerm = ReadTerm(s.SubstituteTerm)
                 });
             }
             return substitutions;
@@ -65,16 +65,16 @@ namespace Trl.TermDataRepresentation.Database
                 return Enumerable.Empty<Term>();
             }
 
-            if (!_termDatabase.LabelToTerm.TryGetValue(labelInteger.Value, out HashSet<ulong> associatedTermIds)
-                || !associatedTermIds.Any())
+            if (!_termDatabase.LabelToTerm.TryGetValue(labelInteger.Value, out HashSet<Term> associatedTerms)
+                || !associatedTerms.Any())
             {
                 return Enumerable.Empty<Term>();
             }
 
             LinkedList<Term> retTerms = new LinkedList<Term>();
-            foreach (var termId in associatedTermIds.Intersect(_termDatabase.CurrentFrame.RootTerms))
+            foreach (var term in associatedTerms.Intersect(_termDatabase.CurrentFrame.RootTerms))
             {
-                retTerms.AddLast(GetInternalTermById(termId));
+                retTerms.AddLast(term);
             }
             return retTerms;
         }
@@ -97,7 +97,7 @@ namespace Trl.TermDataRepresentation.Database
 
             foreach (var internalTerm in terms)
             {                
-                returnStatements.Statements.Add(ReadRootTermStatement(internalTerm.Name.TermIdentifier.Value));
+                returnStatements.Statements.Add(ReadRootTermStatement(internalTerm));
             }
             return returnStatements;
         }
@@ -105,13 +105,12 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Reads the given root term and assign the label list
         /// </summary>
-        public TermStatement ReadRootTermStatement(ulong termId)
+        public TermStatement ReadRootTermStatement(Term dbTerm)
         {
             var returnLabel = new Label
             {
                 Identifiers = new List<Identifier>()
             };
-            var dbTerm = _termDatabase.TermMapper.ReverseMap(termId);
             foreach (var labelId in dbTerm.Labels)
             {
                 returnLabel.Identifiers.Add(new Identifier
@@ -122,16 +121,15 @@ namespace Trl.TermDataRepresentation.Database
             return new TermStatement
             {
                 Label = returnLabel,
-                Term = ReadTerm(termId)
+                Term = ReadTerm(dbTerm)
             };
         }
 
         /// <summary>
         /// Reconstructs a term from an identifier, producing an AST representation of the term.
         /// </summary>
-        public ITrlTerm ReadTerm(ulong termIdentifier)
+        public ITrlTerm ReadTerm(Term term)
         {
-            var term = _termDatabase.TermMapper.ReverseMap(termIdentifier);
             var termName = _termDatabase.StringMapper.ReverseMap(term.Name.AssociatedStringValue);
             return term.Name.Type switch
             {
@@ -140,12 +138,12 @@ namespace Trl.TermDataRepresentation.Database
                 SymbolType.Number => new NumericValue { Value = termName },
                 SymbolType.TermList => new TermList
                 {
-                    Terms = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList()
+                    Terms = term.Arguments.Select(arg => ReadTerm(arg)).ToList()
                 },
                 SymbolType.NonAcTerm => new NonAcTerm
                 {
                     TermName = new Identifier { Name = termName },
-                    Arguments = term.Arguments.Select(arg => ReadTerm(arg.TermIdentifier.Value)).ToList(),
+                    Arguments = term.Arguments.Select(arg => ReadTerm(arg)).ToList(),
                     ClassMemberMappings = ReadClassMemberMappings(term.MetaData)
                 },
                 SymbolType.Variable => new Variable
@@ -156,15 +154,15 @@ namespace Trl.TermDataRepresentation.Database
             };
         }
 
-        private ClassMemberMappingsList ReadClassMemberMappings(Dictionary<TermMetaData, Symbol> metaData)
+        private ClassMemberMappingsList ReadClassMemberMappings(Dictionary<TermMetaData, Term> metaData)
         {
-            if (metaData == null || !metaData.TryGetValue(TermMetaData.ClassMemberMappings, out Symbol mappings))
+            if (metaData == null || !metaData.TryGetValue(TermMetaData.ClassMemberMappings, out Term mappingsList))
             {
                 return null;
             }
 
             // List of Identifiers expected
-            var mappingValues = (TermList)ReadTerm(mappings.TermIdentifier.Value);
+            var mappingValues = (TermList)ReadTerm(mappingsList);
 
             return new ClassMemberMappingsList
             {
@@ -181,10 +179,9 @@ namespace Trl.TermDataRepresentation.Database
             => _termDatabase.TermMapper.ReverseMap(termIdentifier);
 
         /// <summary>
-        /// Gets the current frame as a collection of term identifiers.
+        /// Gets the current frame as a collection of terms.
         /// </summary>
-        /// <returns></returns>
-        public IReadOnlyCollection<ulong> ReadCurrentFrameRootTermIds()
+        public IReadOnlyCollection<Term> ReadCurrentFrameRootTerms()
         {
             return _termDatabase.CurrentFrame.RootTerms.ToList().AsReadOnly();
         }
@@ -192,21 +189,20 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Gets all terms and subterms contained in an expression tree for the given term ID.
         /// </summary>        
-        public IEnumerable<Term> GetAllTermsAndSubtermsForTermId(ulong startTermId)
+        public IEnumerable<Term> GetAllTermsAndSubtermsForTermId(Term startTerm)
         {
-            var next = new Stack<ulong>();
+            var next = new Stack<Term>();
             var retVal = new List<Term>();
-            next.Push(startTermId);
+            next.Push(startTerm);
             while (next.Count > 0)
             {
                 var current = next.Pop();
-                var term = GetInternalTermById(current);
-                retVal.Add(term);
-                if (term.Arguments != null)
+                retVal.Add(current);
+                if (current.Arguments != null)
                 {
-                    foreach (var arg in term.Arguments)
+                    foreach (var arg in current.Arguments)
                     {
-                        next.Push(arg.TermIdentifier.Value);
+                        next.Push(arg);
                     }
                 }
             }

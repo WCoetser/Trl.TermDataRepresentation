@@ -73,7 +73,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
 
                 // Occurs check - The case where LHS = RHS and LHS is variable already covered under "Trivial" case
                 if (lhs.Name.Type == SymbolType.Variable
-                    && rhs.Variables.Contains(lhs.Name.TermIdentifier.Value))
+                    && rhs.Variables.Contains(lhs))
                 {
                     return (Enumerable.Empty<Substitution>(), false);
                 }
@@ -94,9 +94,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
                 {
                     for (int i = 0; i < lhs.Arguments.Length; i++)
                     {
-                        var tLhs = _termDatabase.Reader.GetInternalTermById(lhs.Arguments[i].TermIdentifier.Value);
-                        var tRhs = _termDatabase.Reader.GetInternalTermById(rhs.Arguments[i].TermIdentifier.Value);
-                        currentEquations.Enqueue(new Equation { Lhs = tLhs, Rhs = tRhs });
+                        currentEquations.Enqueue(new Equation { Lhs = lhs.Arguments[i], Rhs = rhs.Arguments[i] });
                     }
                 }
             }
@@ -114,8 +112,8 @@ namespace Trl.TermDataRepresentation.Database.Unification
             foreach (var substitution in substitutions)
             {
                 // Test for a mapping clash
-                if (next.Lhs.Name.TermIdentifier == substitution.MatchTermIdentifier // same name
-                    && next.Rhs.Name.TermIdentifier.Value != substitution.SubstituteTermIdentifier) // different values
+                if (next.Lhs == substitution.MatchTerm // same name
+                    && next.Rhs != substitution.SubstituteTerm) // different values
                 {
                     return false;
                 }
@@ -124,37 +122,35 @@ namespace Trl.TermDataRepresentation.Database.Unification
             // Create the new substitution
             var newSubstitution = new Substitution(_termDatabase)
             {
-                MatchTermIdentifier = next.Lhs.Name.TermIdentifier.Value,
-                SubstituteTermIdentifier = next.Rhs.Name.TermIdentifier.Value
+                MatchTerm = next.Lhs,
+                SubstituteTerm = next.Rhs
             };
 
             // Apply new substitution to current substitutions to eleminate the variable and in the process solve it
             foreach (var substitution in substitutions)
             {
-                substitution.SubstituteTermIdentifier = ApplySubstitution(newSubstitution, substitution.SubstituteTermIdentifier);
+                substitution.SubstituteTerm = ApplySubstitution(newSubstitution, substitution.SubstituteTerm);
             }
             substitutions.Add(newSubstitution);
 
             // Remove all cases where a variable now maps to itself ... 
             // this could potentially cause a "fail" to to mappings clashes later on
-            substitutions.RemoveAll(s => s.MatchTermIdentifier == s.SubstituteTermIdentifier);
+            substitutions.RemoveAll(s => s.MatchTerm == s.SubstituteTerm);
 
             // Apply new substitution to current equations to eleminate variable and in the process "solve" it
             foreach (var eq in currentEquations)
             {
-                var lhs_s = ApplySubstitution(newSubstitution, eq.Lhs.Name.TermIdentifier.Value);
-                var rhs_s = ApplySubstitution(newSubstitution, eq.Rhs.Name.TermIdentifier.Value);
-                eq.Lhs = _termDatabase.Reader.GetInternalTermById(lhs_s);
-                eq.Rhs = _termDatabase.Reader.GetInternalTermById(rhs_s);
+                eq.Lhs = ApplySubstitution(newSubstitution, eq.Lhs);
+                eq.Rhs = ApplySubstitution(newSubstitution, eq.Rhs);
             }
 
             return true;
         }
 
-        private ulong ApplySubstitution(Substitution newSubstitution, ulong substituteTermIdentifier)
+        private Term ApplySubstitution(Substitution newSubstitution, Term substituteTerm)
         {
             var substitutionFrame = new Frame(_termDatabase);
-            substitutionFrame.RootTerms.Add(substituteTermIdentifier);
+            substitutionFrame.RootTerms.Add(substituteTerm);
             substitutionFrame.Substitutions.Add(newSubstitution);
             substitutionFrame.Rewrite(int.MaxValue);
             return substitutionFrame.RootTerms.Single();
@@ -171,8 +167,8 @@ namespace Trl.TermDataRepresentation.Database.Unification
                 return false;
             }
             // Check that the metadata fields lists matches - this is considered part of the name.
-            Symbol lhsMeta = null;
-            Symbol rhsMeta = null;
+            Term lhsMeta = null;
+            Term rhsMeta = null;
             _ = lhs.MetaData?.TryGetValue(TermMetaData.ClassMemberMappings, out lhsMeta);
             _ = rhs.MetaData?.TryGetValue(TermMetaData.ClassMemberMappings, out rhsMeta);
             return (lhsMeta, rhsMeta) switch
@@ -180,7 +176,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
                 (null, null) => true,
                 (null, _) => false,
                 (_, null) => false,
-                (_, _) => lhsMeta.TermIdentifier.Value == rhsMeta.TermIdentifier.Value
+                (_, _) => lhsMeta == rhsMeta
             };  
         }
     }

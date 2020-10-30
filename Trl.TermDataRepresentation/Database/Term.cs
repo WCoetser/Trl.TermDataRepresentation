@@ -27,20 +27,29 @@ namespace Trl.TermDataRepresentation.Database
         /// Term arguments. In the case where this represents a, identifier, number, or string, 
         /// this should be null.
         /// </summary>
-        public Symbol[] Arguments { get; }
+        public Term[] Arguments { get; }
 
         /// <summary>
         /// Represents metadata about a term, for example the class member mappings.
         /// Affects equality, metadata must also be the same for terms to be equal.
         /// </summary>
-        public Dictionary<TermMetaData, Symbol> MetaData { get; }
+        public Dictionary<TermMetaData, Term> MetaData { get; }
 
         /// <summary>
         /// List of variables contained by this term and subterms
         /// </summary>
-        public HashSet<ulong> Variables { get; }
+        public HashSet<Term> Variables { get; }
 
-        public Term(Symbol name, Symbol[] arguments, HashSet<ulong> variables, Dictionary<TermMetaData, Symbol> metaData = null)
+        /// <summary>
+        /// Important: Use <see cref="TermDatabaseWriter"/> to create instances of this class in order to correctly maintain
+        /// term identifier for unique subtrees. (See <see cref="Equals(object)"/> and <see cref="GetHashCode"/> functions).
+        /// Only call this directly for unit tests.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="arguments"></param>
+        /// <param name="variables"></param>
+        /// <param name="metaData"></param>
+        public Term(Symbol name, Term[] arguments, HashSet<Term> variables, Dictionary<TermMetaData, Term> metaData = null)
         {
             Name = name;
             Arguments = arguments;
@@ -52,7 +61,7 @@ namespace Trl.TermDataRepresentation.Database
             {
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    if (!arguments[i].TermIdentifier.HasValue)
+                    if (!arguments[i].Name.TermIdentifier.HasValue)
                     {
                         throw new InvalidOperationException();
                     }
@@ -60,13 +69,25 @@ namespace Trl.TermDataRepresentation.Database
             }
         }
 
-        internal Term CreateCopy(Symbol[] newArguments)
+        public override bool Equals(object obj)
         {
-            var newSymbol = new Symbol(Name.AssociatedStringValue, Name.Type);
-            var newMetaData = MetaData != null ? new Dictionary<TermMetaData, Symbol>(MetaData) : null;
-            var variables = new HashSet<ulong>(Variables);
-            var copy = new Term(newSymbol, newArguments, variables, newMetaData);
-            return copy;
+            var other = obj as Term;
+            return other != null && Name.TermIdentifier.Value == other.Name.TermIdentifier.Value;
         }
+
+        public static bool operator ==(Term lhs, Term rhs)
+        {
+            return (lhs, rhs) switch
+            {
+                (null, null) => true,
+                (_, null) => false,
+                (null, _) => false,
+                (_, _) => lhs.Equals(rhs)
+            };
+        }
+
+        public static bool operator != (Term lhs, Term rhs) => !(lhs == rhs);
+
+        public override int GetHashCode() => Name.TermIdentifier.Value.GetHashCode();
     }
 }

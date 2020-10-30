@@ -15,12 +15,12 @@ namespace Trl.TermDataRepresentation.Database.Mutations
     public class ConvertCommonTermsToRewriteRules : ITermDatabaseMutation
     {
         private readonly Dictionary<string, ulong> _sourceStringCountCache;
-        private readonly Dictionary<ulong, Symbol> _existingSubstitutions;
+        private readonly Dictionary<Term, Term> _existingSubstitutions;
 
         public ConvertCommonTermsToRewriteRules()
         {
             _sourceStringCountCache = new Dictionary<string, ulong>();
-            _existingSubstitutions = new Dictionary<ulong, Symbol>();
+            _existingSubstitutions = new Dictionary<Term, Term>();
         }
 
         public Frame CreateMutatedFrame(Frame inputFrame)
@@ -37,16 +37,15 @@ namespace Trl.TermDataRepresentation.Database.Mutations
                 outputFrame.Substitutions.Add(new Substitution(rewriteRule));
             }
 
-            foreach (var rootTermId in inputFrame.RootTerms)
+            foreach (var rootTerm in inputFrame.RootTerms)
             {
-                var existingRootTerm = database.Reader.GetInternalTermById(rootTermId);
-                Symbol newRootTerm = ConvertToSubstitutionsAndReturnIdentifier(existingRootTerm.Name, outputFrame, termsToProcess);
-                if (newRootTerm.TermIdentifier != rootTermId)
+                var newRootTerm = ConvertToSubstitutionsAndReturnIdentifier(rootTerm, outputFrame, termsToProcess);
+                if (newRootTerm != rootTerm)
                 {
                     // In this case it is new
-                    database.Writer.CopyLabels(rootTermId, newRootTerm.TermIdentifier.Value);
+                    database.Writer.CopyLabels(rootTerm, newRootTerm);
                 }
-                outputFrame.RootTerms.Add(newRootTerm.TermIdentifier.Value);
+                outputFrame.RootTerms.Add(newRootTerm);
             }
             return outputFrame;
         }
@@ -54,9 +53,9 @@ namespace Trl.TermDataRepresentation.Database.Mutations
         /// <summary>
         /// Identifies terms with enough duplication to process.
         /// </summary>
-        private Dictionary<ulong, bool> GetTermsToProcess(Frame inputFrame)
+        private Dictionary<Term, bool> GetTermsToProcess(Frame inputFrame)
         {
-            var retVal = new Dictionary<ulong, bool>();
+            var retVal = new Dictionary<Term, bool>();
             foreach (var root in inputFrame.RootTerms)
             {
                 UpdateGetTermsToProcess(root, inputFrame, retVal);
@@ -64,18 +63,17 @@ namespace Trl.TermDataRepresentation.Database.Mutations
             return retVal;
         }
 
-        private void UpdateGetTermsToProcess(ulong root, Frame inputFrame, Dictionary<ulong, bool> retVal)
+        private void UpdateGetTermsToProcess(Term root, Frame inputFrame, Dictionary<Term, bool> retVal)
         {
-            var term = inputFrame.TermDatabase.Reader.GetInternalTermById(root);
-            if (term.Name.Type != SymbolType.NonAcTerm
-                    && term.Name.Type != SymbolType.TermList)
+            if (root.Name.Type != SymbolType.NonAcTerm
+                    && root.Name.Type != SymbolType.TermList)
             {
                 _ = retVal.TryAdd(root, false);
                 return;
             }            
             
             if (retVal.ContainsKey(root)
-                && !term.Variables.Any())
+                && !root.Variables.Any())
             {
                 retVal[root] = true;
                 // Note: subtree already processed.
@@ -83,59 +81,53 @@ namespace Trl.TermDataRepresentation.Database.Mutations
             }
             _ = retVal.TryAdd(root, false);
 
-            foreach (var arg in term.Arguments)
+            foreach (var arg in root.Arguments)
             {
-                var argId = arg.TermIdentifier.Value;
-                UpdateGetTermsToProcess(argId, inputFrame, retVal);
+                UpdateGetTermsToProcess(arg, inputFrame, retVal);
             }
         }
 
-        private Symbol ConvertToSubstitutionsAndReturnIdentifier(Symbol existingTermSymbol, Frame outputFrame, Dictionary<ulong, bool> termsToProcess)
+        private Term ConvertToSubstitutionsAndReturnIdentifier(Term existingTerm, Frame outputFrame, Dictionary<Term, bool> termsToProcess)
         {
-            if (existingTermSymbol.Type != SymbolType.TermList
-                && existingTermSymbol.Type != SymbolType.NonAcTerm)
+            if (existingTerm.Name.Type != SymbolType.TermList
+                && existingTerm.Name.Type != SymbolType.NonAcTerm)
             {
-                return existingTermSymbol;
+                return existingTerm;
             }
 
-            if (_existingSubstitutions.TryGetValue(existingTermSymbol.TermIdentifier.Value, out Symbol identifier))
+            if (_existingSubstitutions.TryGetValue(existingTerm, out Term identifier))
             {
                 return identifier;
             }
 
-            var existingTerm = outputFrame.TermDatabase.TermMapper.ReverseMap(existingTermSymbol.TermIdentifier.Value);
-
             // Convert Arguments First
-            var replacementArguments = new List<Symbol>();
+            var replacementArguments = new List<Term>();
             foreach (var arg in existingTerm.Arguments)
             {
                 var replacementArg = ConvertToSubstitutionsAndReturnIdentifier(arg, outputFrame, termsToProcess);
                 replacementArguments.Add(replacementArg);
             }
 
-            if (termsToProcess[existingTermSymbol.TermIdentifier.Value]) {
+            if (termsToProcess[existingTerm]) {
                 // In this case we replace the term with a rewrite rule because it occurs more than once
                 // Generate new identifier name or re-use existing
-                var replacementName = GenerateUniqueIdentifierName(existingTermSymbol, outputFrame.TermDatabase);
-                var replacementIdentifierSymbol = outputFrame.TermDatabase.Writer.StoreAtom(replacementName, SymbolType.Identifier);
-                var substitutionTail = existingTerm.CreateCopy(replacementArguments.ToArray());
-                outputFrame.TermDatabase.Writer.StoreTermAndAssignId(substitutionTail);
+                var replacementName = GenerateUniqueIdentifierName(existingTerm, outputFrame.TermDatabase);
+                var replacementIdentifier = outputFrame.TermDatabase.Writer.StoreAtom(replacementName, SymbolType.Identifier);
+                var substitutionTail = outputFrame.TermDatabase.Writer.CreateCopy(existingTerm, replacementArguments.ToArray());
 
                 // Create rewrite rule using replacement term aguments and new identifier as head
                 outputFrame.Substitutions.Add(new Substitution(outputFrame.TermDatabase)
                 {
-                    MatchTermIdentifier = replacementIdentifierSymbol.TermIdentifier.Value,
-                    SubstituteTermIdentifier = substitutionTail.Name.TermIdentifier.Value
+                    MatchTerm = replacementIdentifier,
+                    SubstituteTerm = substitutionTail
                 });
-                _existingSubstitutions.Add(existingTermSymbol.TermIdentifier.Value, replacementIdentifierSymbol);
-                return replacementIdentifierSymbol;
+                _existingSubstitutions.Add(existingTerm, replacementIdentifier);
+                return replacementIdentifier;
             }
             else
             {
                 // In this case only the term arguments are transformed because there is only one of this term
-                var replacementTerm = existingTerm.CreateCopy(replacementArguments.ToArray());
-                outputFrame.TermDatabase.Writer.StoreTermAndAssignId(replacementTerm);
-                return replacementTerm.Name;
+                return  outputFrame.TermDatabase.Writer.CreateCopy(existingTerm, replacementArguments.ToArray());
             }
         }
 
@@ -143,17 +135,16 @@ namespace Trl.TermDataRepresentation.Database.Mutations
         /// Generate a new unique name based on the source string.
         /// This name can be used as a identifier name.
         /// </summary>
-        internal string GenerateUniqueIdentifierName(Symbol existingTermSymbol, TermDatabase termDatabase)
+        internal string GenerateUniqueIdentifierName(Term existingTerm, TermDatabase termDatabase)
         {
-            string existingName = existingTermSymbol.Type switch
+            string existingName = existingTerm.Name.Type switch
             {
-                SymbolType.NonAcTerm => termDatabase.StringMapper.ReverseMap(existingTermSymbol.AssociatedStringValue),
+                SymbolType.NonAcTerm => termDatabase.StringMapper.ReverseMap(existingTerm.Name.AssociatedStringValue),
                 SymbolType.TermList => "list",
                 _ => throw new Exception("Unexpected term type")
             };
 
-            ulong count = 0;
-            _ = _sourceStringCountCache.TryGetValue(existingName, out count);
+            _ = _sourceStringCountCache.TryGetValue(existingName, out ulong count);
             string testString = $"{existingName[0]}{count}";
             while (termDatabase.StringMapper.TryGetMappedValue(testString, out _))
             {
