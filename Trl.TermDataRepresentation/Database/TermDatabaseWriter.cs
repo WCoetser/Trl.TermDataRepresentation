@@ -232,5 +232,21 @@ namespace Trl.TermDataRepresentation.Database
                 _termDatabase.LabelToTerm[l].Add(toTerm);
             }
         }
+
+        /// <summary>
+        /// Sets the function that is used to process a term and produce output.
+        /// </summary>
+        /// <param name="symbolName">This is a string representation of the term name. It could be a string, number, identifier, or the label of a term.</param>
+        /// <param name="">The type of symbol for the symbol name.</param>
+        /// <param name="evaluator">The function used to evaluate the term.</param>
+        public void SetEvaluator(string symbolName, SymbolType symbolType, TermEvaluator evaluator)
+        {
+            var stringIdentifier = _termDatabase.StringMapper.Map(symbolName);
+            if (_termDatabase.CurrentFrame.TermEvaluators.ContainsKey((stringIdentifier, symbolType)))
+            {
+                throw new Exception($"Term evaluator already assigned for {symbolName}, {symbolType}");
+            }
+            _termDatabase.CurrentFrame.TermEvaluators[(stringIdentifier, symbolType)] = evaluator;
+        }
     }
 }

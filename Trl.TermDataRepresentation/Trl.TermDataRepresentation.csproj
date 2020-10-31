@@ -31,10 +31,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Database\TermEvaluator.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Trl.IntegerMapper" Version="1.0.1" />
   </ItemGroup>
 

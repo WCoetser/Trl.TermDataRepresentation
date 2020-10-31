@@ -24,6 +24,8 @@ namespace Trl.TermDataRepresentation.Database
 
         internal TermDatabase TermDatabase { get; }
 
+        internal Dictionary<(ulong, SymbolType), TermEvaluator> TermEvaluators;
+
         /// <summary>
         /// Creates a frame.
         /// </summary>
@@ -35,6 +37,7 @@ namespace Trl.TermDataRepresentation.Database
             RootTerms = new HashSet<Term>();
             Substitutions = new HashSet<Substitution>();
             TermDatabase = termDatabase;
+            TermEvaluators = new Dictionary<(ulong, SymbolType), TermEvaluator>();
         }
 
         /// <summary>
@@ -44,11 +47,6 @@ namespace Trl.TermDataRepresentation.Database
         /// Some term rewriting systems are non-terminating. In order to cater for this, a limit is imposed.</param>
         public void Rewrite(int iterationLimit = 1000)
         {
-            if (!Substitutions.Any())
-            {
-                return;
-            }
-
             // Keep track of new terms for next iteration of rewriting
             HashSet<Term> newTerms = new HashSet<Term>();
             // These terms could be "soft deleted" in the sense that they are no longer selectable by the serializer
@@ -61,6 +59,7 @@ namespace Trl.TermDataRepresentation.Database
 
                 newTerms.Clear();
                 rewrittenTerms.Clear();
+
                 foreach (var substitution in Substitutions)
                 {
                     foreach (var currentRootTerm in RootTerms)
@@ -68,54 +67,26 @@ namespace Trl.TermDataRepresentation.Database
                         // Use unification to generate variable substitutions if needed
                         var substitutionHeadTerm = substitution.MatchTerm;
                         var shouldNotUseUnification = !substitutionHeadTerm.Variables.Any() || substitutionHeadTerm.Name.Type == SymbolType.Variable;
-                        Dictionary<Term, Term> subsitutions = null;
                         if (shouldNotUseUnification)
                         {
-                            // Case 1: Unification not needed
-                            subsitutions = new Dictionary<Term, Term>
-                            {
-                                { substitution.MatchTerm, substitution.SubstituteTerm }
-                            };
-
-                            // Apply substitutions
-                            var newTerm = CopyAndReplaceForEquality(currentRootTerm, subsitutions);
-                            if (currentRootTerm != newTerm)
-                            {
-                                // In this case rewriting took place and the root terms must be updated
-                                newTerms.Add(newTerm);
-                                rewrittenTerms.Add(currentRootTerm);
-                                TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
-                            }
+                            ProcessTermForSubstitutionWithoutUnification(newTerms, rewrittenTerms, substitution, currentRootTerm);
                         }
                         else
                         {
-                            UnifierCalculation unifierCalculation = new UnifierCalculation(TermDatabase);
-
-                            // Case 2: Unification needed
-                            // - Test every subtree of the current term against the substitution for unification
-                            // - Substitute the substitution tail using the unifier
-                            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
-                            {
-                                var unificationResult = unifierCalculation.GetSyntacticUnifier(new Equation { Lhs = substitutionHeadTerm, Rhs = termGraphMember });
-                                if (unificationResult.succeed)
-                                {
-                                    // Generate replacement term using unifier
-                                    // - Substitutions can only be from a variable to a term
-                                    var substitutions = unificationResult.substitutions.ToDictionary(s => s.MatchTerm, s => s.SubstituteTerm);
-                                    var tailSubstitutionValue = CopyAndReplaceForEquality(substitution.SubstituteTerm, substitutions);
-                                    // Replace subterm of current term with calculated replacement
-                                    var replacementSub = new Dictionary<Term, Term> { {  termGraphMember, tailSubstitutionValue } };
-                                    var newId = CopyAndReplaceForEquality(currentRootTerm, replacementSub);
-                                    if (currentRootTerm != newId)
-                                    {
-                                        // In this case rewriting took place and the root terms must be updated
-                                        newTerms.Add(newId);
-                                        rewrittenTerms.Add(currentRootTerm);
-                                        TermDatabase.Writer.CopyLabels(currentRootTerm, newId);
-                                    }
-                                }
-                            }
+                            ProcessTermForSubstitutionWithUnification(newTerms, rewrittenTerms, substitution, currentRootTerm);
                         }
+
+                        // Execute term evaluator
+                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm);
+                    }
+                }
+
+                if (TermEvaluators.Any())
+                {
+                    foreach (var currentRootTerm in RootTerms)
+                    {
+                        // Execute term evaluator
+                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm);
                     }
                 }
 
@@ -125,6 +96,112 @@ namespace Trl.TermDataRepresentation.Database
                 iterationCount++;
             }
             while (newTerms.Any() && iterationCount < iterationLimit);
+        }
+
+        /// <summary>
+        /// Process a term for a substitution. In this case unification is not needed.
+        /// </summary>
+        /// <param name="newTerms">New terms generated during rewriting.</param>
+        /// <param name="rewrittenTerms">Terms changed in the rewrite process.</param>
+        /// <param name="substitution">The substitution applied.</param>
+        /// <param name="currentRootTerm">The term being processed (ie. rewritten using the substitution.)</param>
+        private void ProcessTermForSubstitutionWithoutUnification(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Substitution substitution, Term currentRootTerm)
+        {
+            var subsitutions = new Dictionary<Term, Term>
+            {
+                { substitution.MatchTerm, substitution.SubstituteTerm }
+            };
+
+            // Apply substitutions
+            var newTerm = CopyAndReplaceForEquality(currentRootTerm, subsitutions);
+            if (currentRootTerm != newTerm)
+            {
+                // In this case rewriting took place and the root terms must be updated
+                newTerms.Add(newTerm);
+                rewrittenTerms.Add(currentRootTerm);
+                TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+            }
+        }
+
+        /// <summary>
+        /// Uses unification to solve variable in substitution head and applies solution to current root term.
+        /// </summary>
+        /// <param name="newTerms">New terms generated by processing substitution.</param>
+        /// <param name="rewrittenTerms">Terms changed by substitution.</param>
+        /// <param name="substitution">The substitution applied.</param>
+        /// <param name="currentRootTerm">The current root term being processed.</param>
+        private void ProcessTermForSubstitutionWithUnification(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, 
+            Substitution substitution, Term currentRootTerm)
+        {
+            UnifierCalculation unifierCalculation = new UnifierCalculation(TermDatabase);
+            var substitutionHeadTerm = substitution.MatchTerm;
+
+            // Unification needed
+            // - Test every subtree of the current term against the substitution for unification
+            // - Substitute the substitution tail using the unifier
+
+            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
+            {
+                var unificationResult = unifierCalculation.GetSyntacticUnifier(new Equation { Lhs = substitutionHeadTerm, Rhs = termGraphMember });
+                if (unificationResult.succeed)
+                {
+                    // Generate replacement term using unifier
+                    // - Substitutions can only be from a variable to a term
+                    var substitutions = unificationResult.substitutions.ToDictionary(s => s.MatchTerm, s => s.SubstituteTerm);
+                    var tailSubstitutionValue = CopyAndReplaceForEquality(substitution.SubstituteTerm, substitutions);
+                    // Replace subterm of current term with calculated replacement
+                    var replacementSub = new Dictionary<Term, Term> { { termGraphMember, tailSubstitutionValue } };
+                    var newTerm = CopyAndReplaceForEquality(currentRootTerm, replacementSub);
+                    if (currentRootTerm != newTerm)
+                    {
+                        // In this case rewriting took place and the root terms must be updated
+                        newTerms.Add(newTerm);
+                        rewrittenTerms.Add(currentRootTerm);
+                        TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Runs the term evaluator functions.
+        /// </summary>
+        /// <param name="newTerms">Collection of new terms generated in this process.</param>
+        /// <param name="rewrittenTerms">Collection of terms rewritten in this process.</param>
+        /// <param name="currentRootTerm">The root term that is being processed by term evaluators.</param>
+        private void RunTermEvaluators(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Term currentRootTerm)
+        {
+            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
+            {
+                if (TermEvaluators.TryGetValue((termGraphMember.Name.AssociatedStringValue, termGraphMember.Name.Type), out var termEvaluator)
+                    && termEvaluator != null)
+                {
+                    var outputTerms = termEvaluator(termGraphMember, TermDatabase);
+                    if (outputTerms != null &&  outputTerms.Any())
+                    {
+                        foreach (var outputTerm in outputTerms)
+                        {
+                            var sub = new Dictionary<Term, Term>
+                                        {
+                                            { termGraphMember,  outputTerm }
+                                        };
+                            var newTerm = CopyAndReplaceForEquality(currentRootTerm, sub);
+                            if (currentRootTerm != newTerm)
+                            {
+                                // In this case rewriting took place and the root terms must be updated
+                                newTerms.Add(newTerm);
+                                rewrittenTerms.Add(currentRootTerm);
+                                TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No output terms returned ... delete input term
+                        rewrittenTerms.Add(currentRootTerm);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -175,6 +252,5 @@ namespace Trl.TermDataRepresentation.Database
             // Nothing matched
             return term;
         }       
-
     }
 }

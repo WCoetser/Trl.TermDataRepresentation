@@ -28,6 +28,9 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         internal Dictionary<ulong, HashSet<Term>> LabelToTerm { get; }
 
+        /// <summary>
+        /// The current collection of root terms, substitutions, and term evaluators.
+        /// </summary>
         internal Frame CurrentFrame { get; set; }
 
         private readonly Lazy<TermDatabaseWriter> _writer;
