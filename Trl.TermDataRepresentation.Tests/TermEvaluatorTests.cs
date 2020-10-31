@@ -103,6 +103,30 @@ namespace Trl.TermDataRepresentation.Tests
             });
         }
 
+        [InlineData("t1(); root: ttt(:x); t3();", "t1();root: ttt(1);t3();")]
+        [InlineData("t1(); :x; t3();", "t1();1;t3();")]
+        [Theory]
+        public void ShouldApplyTermEvaluatorToVariable(string input, string expectedOutput)
+        {
+            RunTest(input, expectedOutput, ":x", SymbolType.Variable, (inputTerm, database) =>
+            {
+                return new[] { database.Writer.StoreAtom("1", SymbolType.Number) };
+            });
+        }
+
+        [InlineData("t1(); :x; t3();", "t1();:x;t3();")]
+        [Theory]
+        public void ShouldResultInSameOutputWhenInputReturned(string input, string expectedOutput)
+        {
+            bool replacementFunctionCalled = false;
+            RunTest(input, expectedOutput, "t3", SymbolType.NonAcTerm, (inputTerm, database) =>
+            {
+                replacementFunctionCalled = true;
+                return new[] { inputTerm };
+            });
+            Assert.True(replacementFunctionCalled);
+        }
+
         private static void RunTest(string input, string expectedOutput, string termname, SymbolType symbolType, TermEvaluator evaluator)
         {
             // Arrange
@@ -113,8 +137,8 @@ namespace Trl.TermDataRepresentation.Tests
             database.ExecuteRewriteRules();
 
             // Assert
-            var results = database.Reader.ReadCurrentFrame().ToSourceCode();
-            Assert.True(StringComparer.InvariantCulture.Equals(expectedOutput, results));
+            var result = database.Reader.ReadCurrentFrame().ToSourceCode();
+            Assert.True(StringComparer.InvariantCulture.Equals(expectedOutput, result));
         }
     }
 }

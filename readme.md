@@ -169,6 +169,49 @@ inc(inc(inc(inc(0))));
 0 => inc(0);
 ```
 
+# Term Evaluators
+
+Sometimes, you want to "execute" a term and inject the result back into the term database. This can be done with _term evaluators_. Term evaluators executes on the rewrite step with the rest of the substitutions that may have been defined.
+
+Term evaluators follow these rules:
+
+* When the evaluator returns null or an empty collection, the input term is deleted.
+* When the evaluator returns the same term, then nothing happens and it will be called again on the next rewrite step.
+* When it returns a collection of terms, the input term is replaced, in the same position relative to its parent, with one of the output terms, for each output term. This could lead to multiple new terms being generated.
+
+Given this input:
+
+```C#
+val(count_to_3());
+```
+
+It is possible to register a term evaluator for `count_to_3`:
+
+```C#
+TermEvaluator eval = (inputTerm, database) =>
+{
+    return new[]
+    {
+        database.Writer.StoreAtom("1", SymbolType.Number),
+        database.Writer.StoreAtom("2", SymbolType.Number),
+        database.Writer.StoreAtom("3", SymbolType.Number)
+    };
+};
+termDatabase.Writer.SetEvaluator("count_to_3", SymbolType.NonAcTerm, eval);
+// Later on ...
+termDatabase.ExecuteRewriteRules();
+```
+
+This output will be generated:
+
+```C#
+val(1);
+val(2);
+val(3);
+```
+
+The `Term` class generically represents variables, identifiers, strings, lists, and numbers. Therefore, term evaluators can be used with everything that can make up a term.
+
 # Installation via Nuget
 
 See [https://www.nuget.org/packages/Trl.TermDataRepresentation/](https://www.nuget.org/packages/Trl.TermDataRepresentation/) for nuget package.
