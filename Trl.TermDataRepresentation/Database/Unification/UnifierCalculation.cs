@@ -120,7 +120,7 @@ namespace Trl.TermDataRepresentation.Database.Unification
             }
 
             // Create the new substitution
-            var newSubstitution = new Substitution(_termDatabase)
+            var newSubstitution = new Substitution
             {
                 MatchTerm = next.Lhs,
                 SubstituteTerm = next.Rhs

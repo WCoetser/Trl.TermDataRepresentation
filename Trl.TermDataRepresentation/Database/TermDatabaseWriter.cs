@@ -20,11 +20,13 @@ namespace Trl.TermDataRepresentation.Database
 
         public void StoreRewriteRule(RewriteRule rule)
         {
-            _termDatabase.CurrentFrame.Substitutions.Add(new Substitution(_termDatabase)
-            {
-                MatchTerm = StoreTerm(rule.MatchTerm),
-                SubstituteTerm = StoreTerm(rule.SubstituteTerm)
-            });
+            _termDatabase.CurrentFrame.Substitutions.Add(
+                new Substitution
+                {
+                    MatchTerm = StoreTerm(rule.MatchTerm),
+                    SubstituteTerm = StoreTerm(rule.SubstituteTerm)
+                }
+           );
         }
 
         /// <summary>
@@ -247,6 +249,19 @@ namespace Trl.TermDataRepresentation.Database
                 throw new Exception($"Term evaluator already assigned for {symbolName}, {symbolType}");
             }
             _termDatabase.CurrentFrame.TermEvaluators[(stringIdentifier, symbolType)] = evaluator;
+        }
+
+        /// <summary>
+        /// Sets the function that is called when a rewrite operation generated a new term from an existing term.
+        /// </summary>
+        public void SetTermReplacementObserver(Action<TermReplacement> observer)
+        {
+            if (_termDatabase.CurrentFrame.TermReplacementObserver != null)
+            {
+                throw new Exception("Term replacement observer function already set.");
+            }
+
+            _termDatabase.CurrentFrame.TermReplacementObserver = observer;
         }
     }
 }

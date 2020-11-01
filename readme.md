@@ -212,6 +212,23 @@ val(3);
 
 The `Term` class generically represents variables, identifiers, strings, lists, and numbers. Therefore, term evaluators can be used with everything that can make up a term.
 
+# Tracking the application of rewrite rules and term evaluators during rewriting
+
+Sometimes it is convenient to be able to track changes to the term database as rewrite rules (or term evaluators) are applied, or when a term evaluator function is used to delete a term. In order to use this, register the term replacement observer function, ex.:
+
+```C#
+termDatabase.Writer.SetTermReplacementObserver(replacement =>
+{
+    var originalTerm = replacement.OriginalRootTerm.ToSourceCode(termDatabase);
+    var newTerm = replacement.NewRootTerm.ToSourceCode(termDatabase);
+    Console.WriteLine($"{replacement.RewriteIteration}> Replaced {originalTerm} with {newTerm}");
+});
+```
+
+When the original term is deleted, `replacement.NewRootTerm` will be `null` and `replacement.IsDelete` will be set.
+
+It could get awkward to track changes using the `Term` class. In order to simplify things, instances of `Term` has unique integer identifiers, called _term identifiers_. These term identifiers are unique per expression tree. If any two instances of `Term` has the same term identifier, then they are equal. This equality is managed through the `TermDatabaseWriter` class. Term identifiers be used for hashing and equality comparisons, which makes it ideal for cache invalidation. This identifier can be accessed through the `Term.Name.TermIdenfier` value.
+
 # Installation via Nuget
 
 See [https://www.nuget.org/packages/Trl.TermDataRepresentation/](https://www.nuget.org/packages/Trl.TermDataRepresentation/) for nuget package.

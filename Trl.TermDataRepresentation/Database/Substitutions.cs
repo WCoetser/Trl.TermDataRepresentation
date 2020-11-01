@@ -14,18 +14,10 @@ namespace Trl.TermDataRepresentation.Database
         /// </summary>
         public Term SubstituteTerm { get; set; }
 
-        public TermDatabase TermDatabase { get; }
-
-        public Substitution(TermDatabase termDatabase)
-        {
-            TermDatabase = termDatabase;
-        }
-
-        public Substitution(Substitution cloneSource)
+        public Substitution(Substitution cloneSource = null)
         {
             if (cloneSource != null)
             {
-                TermDatabase = cloneSource.TermDatabase;
                 MatchTerm = cloneSource.MatchTerm;
                 SubstituteTerm = cloneSource.SubstituteTerm;
             }

@@ -57,7 +57,7 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Assert
             Assert.True(unifier.succeed);
-            var unifierStrings = unifier.substitutions.Select(u => u.ToSourceCode());
+            var unifierStrings = unifier.substitutions.Select(u => u.ToSourceCode(database));
             Assert.True(TestUtilities.ContainsTheSameValues(substitutions, unifierStrings));
         }
     }

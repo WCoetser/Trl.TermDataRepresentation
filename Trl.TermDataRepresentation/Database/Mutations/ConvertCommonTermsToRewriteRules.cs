@@ -116,7 +116,7 @@ namespace Trl.TermDataRepresentation.Database.Mutations
                 var substitutionTail = outputFrame.TermDatabase.Writer.CreateCopy(existingTerm, replacementArguments.ToArray());
 
                 // Create rewrite rule using replacement term aguments and new identifier as head
-                outputFrame.Substitutions.Add(new Substitution(outputFrame.TermDatabase)
+                outputFrame.Substitutions.Add(new Substitution
                 {
                     MatchTerm = replacementIdentifier,
                     SubstituteTerm = substitutionTail

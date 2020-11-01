@@ -8,12 +8,17 @@ namespace Trl.TermDataRepresentation
 {
     public static class DebugUtils
     {
-        public static string ToSourceCode(this Substitution substitution)
+        public static string ToSourceCode(this Substitution substitution, TermDatabase database)
         {
-            var reader = substitution.TermDatabase.Reader;
-            var head = reader.ReadTerm(substitution.MatchTerm).ToSourceCode();
-            var tail = reader.ReadTerm(substitution.SubstituteTerm).ToSourceCode();
+            var head = substitution.MatchTerm.ToSourceCode(database);
+            var tail = substitution.SubstituteTerm.ToSourceCode(database);
             return $"{head} => {tail};";
+        }
+
+        public static string ToSourceCode(this Term @this, TermDatabase database)
+        {
+            var reader = database.Reader;
+            return reader.ReadTerm(@this).ToSourceCode();
         }
 
         public static string ToSourceCode(this ITrlParseResult @this, bool prettyPrint = false)

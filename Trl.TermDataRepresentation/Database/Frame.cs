@@ -24,7 +24,9 @@ namespace Trl.TermDataRepresentation.Database
 
         internal TermDatabase TermDatabase { get; }
 
-        internal Dictionary<(ulong, SymbolType), TermEvaluator> TermEvaluators;
+        internal Dictionary<(ulong, SymbolType), TermEvaluator> TermEvaluators { get; }
+
+        internal Action<TermReplacement> TermReplacementObserver { get; set; }
 
         /// <summary>
         /// Creates a frame.
@@ -51,7 +53,7 @@ namespace Trl.TermDataRepresentation.Database
             HashSet<Term> newTerms = new HashSet<Term>();
             // These terms could be "soft deleted" in the sense that they are no longer selectable by the serializer
             HashSet<Term> rewrittenTerms = new HashSet<Term>();
-            int iterationCount = 0;
+            int iterationStep = 0;
 
             do
             {
@@ -69,15 +71,15 @@ namespace Trl.TermDataRepresentation.Database
                         var shouldNotUseUnification = !substitutionHeadTerm.Variables.Any() || substitutionHeadTerm.Name.Type == SymbolType.Variable;
                         if (shouldNotUseUnification)
                         {
-                            ProcessTermForSubstitutionWithoutUnification(newTerms, rewrittenTerms, substitution, currentRootTerm);
+                            ProcessTermForSubstitutionWithoutUnification(newTerms, rewrittenTerms, substitution, currentRootTerm, iterationStep);
                         }
                         else
                         {
-                            ProcessTermForSubstitutionWithUnification(newTerms, rewrittenTerms, substitution, currentRootTerm);
+                            ProcessTermForSubstitutionWithUnification(newTerms, rewrittenTerms, substitution, currentRootTerm, iterationStep);
                         }
 
                         // Execute term evaluator
-                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm);
+                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm, iterationStep);
                     }
                 }
 
@@ -86,16 +88,16 @@ namespace Trl.TermDataRepresentation.Database
                     foreach (var currentRootTerm in RootTerms)
                     {
                         // Execute term evaluator
-                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm);
+                        RunTermEvaluators(newTerms, rewrittenTerms, currentRootTerm, iterationStep);
                     }
                 }
 
                 // NB: First remove then add, in case there was a term that "came back" via rewrite rules
                 RootTerms.ExceptWith(rewrittenTerms);
                 RootTerms.UnionWith(newTerms);
-                iterationCount++;
+                iterationStep++;
             }
-            while (newTerms.Any() && iterationCount < iterationLimit);
+            while (newTerms.Any() && iterationStep < iterationLimit);
         }
 
         /// <summary>
@@ -105,7 +107,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="rewrittenTerms">Terms changed in the rewrite process.</param>
         /// <param name="substitution">The substitution applied.</param>
         /// <param name="currentRootTerm">The term being processed (ie. rewritten using the substitution.)</param>
-        private void ProcessTermForSubstitutionWithoutUnification(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Substitution substitution, Term currentRootTerm)
+        private void ProcessTermForSubstitutionWithoutUnification(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Substitution substitution, Term currentRootTerm, int rewriteIteration)
         {
             var subsitutions = new Dictionary<Term, Term>
             {
@@ -116,11 +118,19 @@ namespace Trl.TermDataRepresentation.Database
             var newTerm = CopyAndReplaceForEquality(currentRootTerm, subsitutions);
             if (currentRootTerm != newTerm)
             {
-                // In this case rewriting took place and the root terms must be updated
-                newTerms.Add(newTerm);
-                rewrittenTerms.Add(currentRootTerm);
-                TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+                RecordSubstitutionResult(newTerms, rewrittenTerms, currentRootTerm, newTerm, substitution, rewriteIteration);
             }
+        }
+
+        private void RecordSubstitutionResult(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Term currentRootTerm, Term newTerm, Substitution substitution, int rewriteIteration)
+        {
+            // In this case rewriting took place and the root terms must be updated
+            newTerms.Add(newTerm);
+            rewrittenTerms.Add(currentRootTerm);
+            TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+
+            // Call tracking function to notify of change
+            TermReplacementObserver?.Invoke(new TermReplacement(currentRootTerm, newTerm, rewriteIteration, substitution));
         }
 
         /// <summary>
@@ -131,7 +141,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="substitution">The substitution applied.</param>
         /// <param name="currentRootTerm">The current root term being processed.</param>
         private void ProcessTermForSubstitutionWithUnification(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, 
-            Substitution substitution, Term currentRootTerm)
+            Substitution substitution, Term currentRootTerm, int iterationCount)
         {
             UnifierCalculation unifierCalculation = new UnifierCalculation(TermDatabase);
             var substitutionHeadTerm = substitution.MatchTerm;
@@ -155,9 +165,7 @@ namespace Trl.TermDataRepresentation.Database
                     if (currentRootTerm != newTerm)
                     {
                         // In this case rewriting took place and the root terms must be updated
-                        newTerms.Add(newTerm);
-                        rewrittenTerms.Add(currentRootTerm);
-                        TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+                        RecordSubstitutionResult(newTerms, rewrittenTerms, currentRootTerm, newTerm, substitution, iterationCount);
                     }
                 }
             }
@@ -169,7 +177,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="newTerms">Collection of new terms generated in this process.</param>
         /// <param name="rewrittenTerms">Collection of terms rewritten in this process.</param>
         /// <param name="currentRootTerm">The root term that is being processed by term evaluators.</param>
-        private void RunTermEvaluators(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Term currentRootTerm)
+        private void RunTermEvaluators(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Term currentRootTerm, int rewriteIteration)
         {
             foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
             {
@@ -189,9 +197,7 @@ namespace Trl.TermDataRepresentation.Database
                             if (currentRootTerm != newTerm)
                             {
                                 // In this case rewriting took place and the root terms must be updated
-                                newTerms.Add(newTerm);
-                                rewrittenTerms.Add(currentRootTerm);
-                                TermDatabase.Writer.CopyLabels(currentRootTerm, newTerm);
+                                RecordSubstitutionResult(newTerms, rewrittenTerms, currentRootTerm, newTerm, null, rewriteIteration);
                             }
                         }
                     }
@@ -199,6 +205,7 @@ namespace Trl.TermDataRepresentation.Database
                     {
                         // No output terms returned ... delete input term
                         rewrittenTerms.Add(currentRootTerm);
+                        TermReplacementObserver?.Invoke(new TermReplacement(currentRootTerm, null, rewriteIteration, null));
                     }
                 }
             }
