@@ -22,11 +22,11 @@ namespace Trl.TermDataRepresentation.Tests
 
             // Act
             var eq = new Equation { Lhs = lhs, Rhs = rhs };
-            var unifier = unification.GetSyntacticUnifier(eq);
+            var (substitutions, succeed) = unification.GetSyntacticUnifier(eq);
 
             // Assert
-            Assert.False(unifier.succeed);
-            Assert.Empty(unifier.substitutions);
+            Assert.False(succeed);
+            Assert.Empty(substitutions);
         }
 
         [InlineData("lhs: t(:x, :z); rhs: t(:z, 2);", new[] { ":x => 2;", ":z => 2;" })]

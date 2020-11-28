@@ -25,8 +25,8 @@ namespace Trl.TermDataRepresentation.Database
 
         public override bool Equals(object obj)
         {
-            var other = obj as Substitution;
-            return other != null && (other.MatchTerm, other.SubstituteTerm) == (MatchTerm , SubstituteTerm);
+            return obj is Substitution other 
+                && (other.MatchTerm, other.SubstituteTerm) == (MatchTerm, SubstituteTerm);
         }
 
         public override int GetHashCode() => HashCode.Combine(MatchTerm, SubstituteTerm);

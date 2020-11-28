@@ -26,9 +26,9 @@ namespace Trl.TermDataRepresentation
             using var memOut = new MemoryStream();
             using var streamWriter = new StreamWriter(memOut, Encoding.UTF8);
 
-            if (@this is StatementList)
+            if (@this is StatementList list)
             {
-                ((StatementList)@this).WriteToStream(streamWriter, prettyPrint);
+                list.WriteToStream(streamWriter, prettyPrint);
             }
             else
             {

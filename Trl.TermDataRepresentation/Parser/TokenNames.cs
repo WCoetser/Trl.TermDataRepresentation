@@ -17,6 +17,7 @@
         SemiColon,
         Colon,
         Arrow,
-        Variable
+        Variable,
+        Comment
     }
 }

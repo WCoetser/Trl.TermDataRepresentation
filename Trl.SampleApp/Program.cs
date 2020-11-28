@@ -7,7 +7,7 @@ namespace Trl.SampleApp
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             var input = "0; 0 => inc(0);";
 

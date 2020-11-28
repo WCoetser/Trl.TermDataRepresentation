@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trl.IntegerMapper;
+using Trl.Serialization;
+using Trl.Serialization.Translator;
 using Trl.TermDataRepresentation.Database;
 using Xunit;
 
@@ -92,13 +93,16 @@ namespace Trl.TermDataRepresentation.Tests
         [Fact]
         public void ShouldGenerateMultipleTerms()
         {
+            var nameAndTypeMappings = new NameAndTypeMappings();
+            var translator = new ObjectToAstTranslator(nameAndTypeMappings);
+
             RunTest("val(count_to_3());", "val(1);val(2);val(3);", "count_to_3", SymbolType.NonAcTerm, (inputTerm, database) =>
             {
-                return new[] 
-                { 
-                    database.Writer.StoreAtom("1", SymbolType.Number),
-                    database.Writer.StoreAtom("2", SymbolType.Number),
-                    database.Writer.StoreAtom("3", SymbolType.Number)
+                return new[]
+                {
+                    translator.BuildTermForObject(1, database),
+                    translator.BuildTermForObject(2, database),
+                    translator.BuildTermForObject(3, database)
                 };
             });
         }

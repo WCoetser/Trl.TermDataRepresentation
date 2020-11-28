@@ -18,7 +18,7 @@ The TRL (Term Rewriting Language) system revolves around an in-memory _term data
 
 Defining a term is quite simple, here are examples:
 
-```C
+```C#
 date(2020, 10, 13);
 greeting("Hello");
 house(wall(1), wall(2), wall(3), roof());
@@ -28,15 +28,21 @@ house(wall(1), wall(2), wall(3), roof());
 
 Sometimes _identifiers_ are also handy. This is also a valid term:
 
-```C
+```C#
 mul(Pi, 20, 20);
 ```
 
 Identifiers and term names follow the same rules as identifiers in most programming languages and can be `.` delimited, ex. `Math.Pi` is valid, but `123HaveSomeTee` is not.
 
+Comments are also supported:
+
+```C#
+// TRL supports 1 line C-style comments
+```
+
 Collections of objects are stored as lists. Internally, lists are viewed as terms with no names. Therefore, they are basically just lists of arguments:
 
-```C
+```C#
 (1,2,3);
 ("Mozart", "Bach", "Beethoven");
 ```
@@ -211,6 +217,26 @@ val(3);
 ```
 
 The `Term` class generically represents variables, identifiers, strings, lists, and numbers. Therefore, term evaluators can be used with everything that can make up a term.
+
+In some cases, it is convenient to use reflection to automatically load .NET objects into the database in the term evaluator. This could be useful where large complex classes are used. (The functionality to do this translation is in the [Trl.Serialization](https://github.com/WCoetser/Trl.Serialization) project.)
+
+For example:
+
+```C#
+var nameAndTypeMappings = new NameAndTypeMappings();
+var translator = new ObjectToAstTranslator(nameAndTypeMappings);
+
+TermEvaluator eval = (inputTerm, database) =>
+{
+    return new[]
+    {
+        translator.BuildTermForObject(1, database),
+        translator.BuildTermForObject(2, database),
+        translator.BuildTermForObject(3, database)
+    };
+};
+termDatabase.Writer.SetEvaluator("count_to_3", SymbolType.NonAcTerm, eval);
+```
 
 # Tracking the application of rewrite rules and term evaluators during rewriting
 

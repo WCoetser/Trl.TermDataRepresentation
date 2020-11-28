@@ -150,7 +150,7 @@ namespace Trl.TermDataRepresentation.Database
             // - Test every subtree of the current term against the substitution for unification
             // - Substitute the substitution tail using the unifier
 
-            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
+            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTerm(currentRootTerm))
             {
                 var unificationResult = unifierCalculation.GetSyntacticUnifier(new Equation { Lhs = substitutionHeadTerm, Rhs = termGraphMember });
                 if (unificationResult.succeed)
@@ -179,7 +179,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <param name="currentRootTerm">The root term that is being processed by term evaluators.</param>
         private void RunTermEvaluators(HashSet<Term> newTerms, HashSet<Term> rewrittenTerms, Term currentRootTerm, int rewriteIteration)
         {
-            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTermId(currentRootTerm))
+            foreach (var termGraphMember in TermDatabase.Reader.GetAllTermsAndSubtermsForTerm(currentRootTerm))
             {
                 if (TermEvaluators.TryGetValue((termGraphMember.Name.AssociatedStringValue, termGraphMember.Name.Type), out var termEvaluator)
                     && termEvaluator != null)

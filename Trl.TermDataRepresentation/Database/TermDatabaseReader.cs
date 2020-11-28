@@ -189,7 +189,7 @@ namespace Trl.TermDataRepresentation.Database
         /// <summary>
         /// Gets all terms and subterms contained in an expression tree for the given term ID.
         /// </summary>        
-        public IEnumerable<Term> GetAllTermsAndSubtermsForTermId(Term startTerm)
+        public IEnumerable<Term> GetAllTermsAndSubtermsForTerm(Term startTerm)
         {
             var next = new Stack<Term>();
             var retVal = new List<Term>();

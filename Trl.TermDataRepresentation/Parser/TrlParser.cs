@@ -28,6 +28,7 @@ namespace Trl.TermDataRepresentation.Parser
         {
             // NB: This list of token definitions is prioritized
             _tokenizer = _pegFacade.Tokenizer(new[] {
+                _pegFacade.Token(TokenNames.Comment, new Regex(@"//.*\n")),
                 _pegFacade.Token(TokenNames.String, new Regex(@"""(?:(?:\\\"")|[^\""])*?\""", RegexOptions.Compiled)), // \" is used to escape quote characters
                 _pegFacade.Token(TokenNames.Variable, new Regex(@"\:[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
                 _pegFacade.Token(TokenNames.Identifier, new Regex(@"[_a-zA-Z]\w*(?:\.[_a-zA-Z]\w*)*", RegexOptions.Compiled)),
@@ -236,7 +237,8 @@ RewriteRule => Term [Arrow] Term;
             {
                 return new TrlParseResult { Succeed = false };
             }
-            var tokensNoWhitespace = tokenizationResult.MatchedRanges.Where(token => token.TokenName != TokenNames.Whitespace);
+            var tokensNoWhitespace = tokenizationResult.MatchedRanges.Where(token => token.TokenName != TokenNames.Whitespace 
+                && token.TokenName != TokenNames.Comment);
             var parseResult = _parser.Parse(tokensNoWhitespace.ToList().AsReadOnly());
             var validator = new SemanticValidator();
             var semanticErrors = validator.GetSemanticErrors(parseResult);

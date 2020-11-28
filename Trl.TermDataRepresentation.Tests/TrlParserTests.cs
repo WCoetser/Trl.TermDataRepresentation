@@ -15,6 +15,28 @@ namespace Trl.TermDataRepresentation.Tests
             _parser = new TrlParser();
         }
 
+        [Fact]
+        public void ShouldIgnoreComments()
+        {
+            // Arrange
+            const string input =
+@"
+// ""abc""
+""def"";
+// 123
+";
+
+            // Act
+            var result = _parser.ParseToAst($"{input};");
+
+            // Assert
+            var statements = result.Statements;
+            Assert.True(result.Succeed);
+            Assert.Single(statements.Statements);
+            StringValue str = (StringValue)statements.Statements.Single().Term;
+            Assert.Equal("def", str.Value);
+        }
+
         [InlineData("123")]
         [InlineData("-123")]
         [InlineData("+123")]

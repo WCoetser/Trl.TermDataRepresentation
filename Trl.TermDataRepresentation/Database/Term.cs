@@ -11,7 +11,7 @@ namespace Trl.TermDataRepresentation.Database
     /// </summary>
     public class Term
     {
-        private Lazy<HashSet<ulong>> _labels = new Lazy<HashSet<ulong>>(() => new HashSet<ulong>());
+        private readonly Lazy<HashSet<ulong>> _labels = new Lazy<HashSet<ulong>>(() => new HashSet<ulong>());
 
         /// <summary>
         /// Mapped integers for string labels assocated with this term.
